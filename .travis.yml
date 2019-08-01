@@ -1,25 +1,25 @@
 language: python
 install:
-    - pip install -U tox-travis
-    - pip install codecov coverage
+- pip install -U tox-travis
+- pip install codecov coverage
 script: tox
 matrix:
   include:
-    - python: 3.6
-    - python: 3.7
-      dist: xenial
-      sudo: required
-    - name: Linting
-      python: "3.6"
-      script: tox -e linters
+  - python: 3.6
+  - python: 3.7
+    dist: xenial
+    sudo: required
+  - name: Linting
+    python: '3.6'
+    script: tox -e linters
 after_success:
-  - codecov
+- codecov
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
   user: guangtianli
   password:
-    secure: Qp77fQn0TtwRjZUFXeelBsdGY8toq+pvZ1ei7UoZ3rOOaWBHa5xTKl0oINhw7m+ry4sqUQCNQvMkk4lDearTX4Usan0OYqtW2HlITGrzlpjpZjj6R5Cr4HpeCqlIGpqrMtKtM3FsOoEOoC6iPH4dPIWVTwYTFBpyYegx7sD5mvPPUubvHGP4WADDfN05ykw5KtoVKtYzFZUrbTiQlXjlCpy2KjSlmFAcA6UqdsDxoaynO0bCdy67dlUfRord0Soz1O9DusP4SQAGQD+A8gi7qj0oJhk2VnLoQ6HTlLh4dj24Ucq02M976vckxbFHv/AYh1Dzsgk5ggaldg2yHofI2nA98xPP9uYNCQAc3eZBA8mfOEU2YRoAkjvaidoj97jM4lSEh/fiH0zLq9ESrkqFg/X/IkwaQrGXq0vkdg/07byycdCx9OQC9MfglVcw2jiF9oMRElpXZqElc6Bond6UMseWQwikxSrXtXKgit28PYebx7iEvtHF7Yd7OUhJ0CouHkT2DF1wDtY3N8ztZ87xYDia7li98hMrazLlUzR4ZZJsrWW2vQh0fGuZKJD0x6wYN/HGpOySxMfGc8a2gfkXH00jzVEEBg2bGtR9g6cl7YDD3BuZAI942Eq/c1IL+aSRHnYnPlfn+K+SM1R2lzm+FP0TjoBXxjqGI9LGnEle/58=
+    secure: U3zv5dqup5ChY7O6JwnSV2IRtJjra9hGiEE2kU0BOgQ+YPMXxoIi00oqxKTWsN+Ae5+5mfSMAJnFbF+z5NbyTnRTRjW7UI2bGISp0SV16gAbDXVgYqOFUhsyEV8MzICNbNINB6wsIGPXolLR1IbJlIFjbUGyQYLufPtfE7o7CzHccW8gbq8AeKfwvX6bxMa6DGPUPdZ27/VYfQRqSP4j+yIbs5L83bqbYXvUjkmalr52y2sAJemCjUT/pve1wsT0cPf5uH8WaSMQSxVnHaBqwCPNen+YQW4u5zAxgvaGRJ1v3p9l1T5emddGnAxR4GlhiHV419/AV71xcIHAV/KzbuFYWWmH4KdHjgNVkhVscimMQPz+NTjOXSiDglRpf1p69DjUdq+pcJYJ+yDI8vT7rUK+GBRNfWlWuiL4i7qiw0q61vJIcY91iSQn8wkasO6t1+1vxJaN5crFesYZMOPhNOEd7FSa4A5sR67YxawFN53CnQgeix6Axgm1uAiXjwr58Xp50s/f4chsAgOcTHBL+VL9aoTgEIQiF7v9NvttbIWvF6Tsq+h5g/zj4oQqAaaju/QEoZ4KcJ1qCwc415MT6ReiBsRghQgzT7QDgWXIg7FUXRyycGBD1ThiqiRG4Jg0wFDxzYDLpTMYPsz/5CGGnSFJxQPUeWBiJ7pIU0wN+Lc=
   on:
     tags: true
     repo: GuangTianLi/configalchemy

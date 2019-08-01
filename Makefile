@@ -43,7 +43,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 clean-lint: ## remove mypy cache
-	re -fr .mypy_cache/
+	rm -fr .mypy_cache/
 
 clean-build: ## remove build artifacts
 	rm -fr build/
