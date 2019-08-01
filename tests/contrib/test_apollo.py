@@ -44,15 +44,17 @@ class ApolloConfigTestCase(unittest.TestCase):
     def test_long_poll(self):
         class DefaultConfig(ApolloBaseConfig):
             TEST = "base"
+
             #: apollo
-            APOLLO_SERVER_URL = "http://apollo.service.gllue.net"
-            APOLLO_APP_ID = "5b366db80139"
+            APOLLO_SERVER_URL = ""
+            APOLLO_APP_ID = ""
             APOLLO_CLUSTER = "default"
             APOLLO_NAMESPACE = "application"
 
-        config = DefaultConfig()
         requests.get = mock_get
-        self.assertEqual("test", config["TEST"])
+        return_value["namespaceName"] = "application"
+        config = DefaultConfig()
+        return_value["namespaceName"] = "tmp"
         self.assertEqual("changed", config.get_from_namespace("TEST", namespace="tmp"))
         thread = config.start_long_poll()
         time.sleep(1)
