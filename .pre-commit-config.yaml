@@ -1,0 +1,21 @@
+fail_fast: true
+repos:
+- repo: local
+  hooks:
+
+  - id: ipdb
+    name: ipdb
+    entry: pre_commit/check_python_debugger.sh
+    language: script
+    types: [python]
+    args: []
+
+  - id: format
+    name: format
+    entry: pipenv run format
+    exclude: >
+        (?x)^(
+            docs/.+
+        )$
+    language: python
+    types: [python]

@@ -1,0 +1,37 @@
+[[source]]
+name = "pypi"
+url = "https://mirrors.aliyun.com/pypi/simple/"
+verify_ssl = true
+
+[[source]]
+url = "https://gllue:gllue321@pypi.gllue.net"
+verify_ssl = false
+name = "gllue"
+
+[dev-packages]
+ipython = "*"
+ipdb = "*"
+black = "*"
+pre-commit = "*"
+watchdog = "*"
+sphinx = "*"
+coverage = "*"
+sphinx-rtd-theme = "*"
+bumpversion = "*"
+wheel = "*"
+tox = "*"
+mypy = "*"
+
+[packages]
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+pre_commit_init = "pre-commit install"
+test = "python -m unittest discover -s tests"
+isort =  "bash -c 'isort $@ && git add -u' --"
+format =  "bash -c 'black $@ && git add -u' --"
+
+[pipenv]
+allow_prereleases = true
