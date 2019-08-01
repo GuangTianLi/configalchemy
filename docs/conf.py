@@ -1,7 +1,7 @@
 # configalchemy documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
 #
-# This file is execfile()d with the current directory set to its
+# This file is execfile() with the current directory set to its
 # containing dir.
 #
 # Note that not all possible configuration values are present in this
@@ -40,8 +40,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ConfigAlchemy'
-copyright = "2019, Gllue"
-author = "Gllue"
+copyright = "2019, GuangTian Li"
+author = "GuangTian Li"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -112,13 +112,10 @@ latex_elements = {
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-    'fncychap': '',
 
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-    'preamble': r'''\usepackage{ctex}
-                ''',
 
     # Latex figure (float) alignment
     #
@@ -131,7 +128,7 @@ latex_elements = {
 latex_documents = [
     (master_doc, 'configalchemy.tex',
      'ConfigAlchemy Documentation',
-     'Gllue', 'manual'),
+     'GuangTian Li', 'manual'),
 ]
 
 
