@@ -12,7 +12,7 @@ requirements = []
 
 setup_requirements = []
 
-test_requirements = []
+test_requirements = ["requests"]
 
 
 setup(
