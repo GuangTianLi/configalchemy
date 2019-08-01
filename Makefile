@@ -29,7 +29,7 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-pyc clean-test clean-build ## remove all test, coverage and Python artifacts
+clean: clean-pyc clean-test clean-build clean-lint ## remove all test, coverage and Python artifacts
 
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
@@ -41,7 +41,9 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
-	rm -fr .pytest_cache
+
+clean-lint: ## remove mypy cache
+	re -fr .mypy_cache/
 
 clean-build: ## remove build artifacts
 	rm -fr build/
