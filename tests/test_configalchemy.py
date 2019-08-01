@@ -43,6 +43,19 @@ class ConfigalchemyTestCase(unittest.TestCase):
         test_double_star(**config)
         self.assertEqual("NOT_EXIST", config.get("NOT_EXIST", "NOT_EXIST"))
 
+        self.assertTrue(config)
+        self.assertTrue("TEST" in config)
+        self.assertEqual(len(config), len(list(iter(config))))
+
+        config.update(dict(TEST="update"))
+        self.assertEqual("update", config["TEST"])
+        self.assertEqual("update", config.TEST)
+        del config["TEST"]
+        with self.assertRaises(KeyError):
+            tmp = config.TEST
+        with self.assertRaises(KeyError):
+            tmp = config["TEST"]
+
     def test_default_config_update_from_json(self):
         class DefaultObject(BaseConfig):
             CONFIG_FILE = self.json_file
@@ -53,6 +66,13 @@ class ConfigalchemyTestCase(unittest.TestCase):
 
         self.assertEqual("JSON_TEST", config["JSON_TEST"])
         self.assertEqual("JSON_TEST", config.JSON_TEST)
+
+    def test_config_file_not_exist(self):
+        class DefaultObject(BaseConfig):
+            CONFIG_FILE = "not.exist"
+
+        with self.assertRaises(IOError):
+            DefaultObject()
 
     def test_config_with_env(self):
         os.environ["test_TEST"] = "changed"
@@ -123,6 +143,6 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual("1", config["SECOND"])
         self.assertEqual("2", config["THIRD"])
         self.assertEqual(3, config["FOURTH"])
-        config.from_sync_access_config_list()
+        config.access_config_from_function_list()
         self.assertEqual(3, config["FOURTH"])
         os.remove(current_json_file)

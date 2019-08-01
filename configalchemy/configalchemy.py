@@ -17,7 +17,6 @@ from typing import (
     MutableMapping,
 )
 
-from configalchemy.utils import display_property_attribute_error_exceptions
 
 _miss = lambda _: _
 
@@ -238,12 +237,10 @@ class _ConfigAttribute:
     def __init__(self, name: str):
         self._name = name
 
-    @display_property_attribute_error_exceptions
     def __get__(self, obj: BaseConfig, type=None) -> Any:
         if obj is None:
             return self
         return obj[self._name]
 
-    @display_property_attribute_error_exceptions
     def __set__(self, instance: BaseConfig, value: Any) -> None:
         instance[self._name] = value
