@@ -220,6 +220,9 @@ class BaseConfig(ConfigType):
     def __setitem__(self, k, v) -> None:
         self._set_value(k, v, priority=3)
 
+    def __delitem__(self, key) -> None:
+        del self.config_meta[key]
+
     def update(self, __m, **kwargs):
         self.from_mapping(__m, kwargs, priority=3)
 

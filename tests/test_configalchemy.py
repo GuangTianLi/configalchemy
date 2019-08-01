@@ -37,6 +37,10 @@ class ConfigalchemyTestCase(unittest.TestCase):
         with self.assertRaises(KeyError):
             _ = config["NOT_EXIST"]
 
+        def test_double_star(**kw):
+            self.assertEqual(config, kw)
+
+        test_double_star(**config)
         self.assertEqual("NOT_EXIST", config.get("NOT_EXIST", "NOT_EXIST"))
 
     def test_default_config_update_from_json(self):
