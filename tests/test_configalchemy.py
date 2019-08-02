@@ -31,7 +31,6 @@ class ConfigalchemyTestCase(unittest.TestCase):
             TEST = "test"
 
         config = DefaultObject()
-
         self.assertEqual("test", config["TEST"])
         self.assertEqual("test", config.TEST)
         with self.assertRaises(KeyError):
@@ -112,11 +111,11 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual("changed", config.TEST)
 
     def test_config_priority(self):
-        os.environ["test_FOURTH"] = "3"
+        os.environ["test_FOURTH"] = "4"
         current_json_file = "test_priority.json"
 
         with open(current_json_file, "w") as fp:
-            json.dump({"THIRD": "2", "FOURTH": "2"}, fp)
+            json.dump({"THIRD": "3", "FOURTH": "3"}, fp)
 
         class DefaultObject(BaseConfig):
             # env
@@ -125,24 +124,29 @@ class ConfigalchemyTestCase(unittest.TestCase):
             CONFIG_FILE = current_json_file
             ENABLE_FUNCTION = True
 
-            FIRST = 0
-            SECOND = "0"
-            THIRD = "0"
-            FOURTH = 0
+            FIRST = 1
+            SECOND = "1"
+            THIRD = "1"
+            FOURTH = 1
 
         def get_config(current_config: DefaultObject) -> dict:
-            return {"SECOND": "1", "FOURTH": "1"}
+            return {"SECOND": "2", "FOURTH": "2"}
 
         async def get_config_async(current_config: DefaultObject) -> dict:
-            return {"THIRD": 1, "FOURTH": 1}
+            return {"THIRD": 2, "FOURTH": 2}
 
         config = DefaultObject(
             function_list=[get_config], coroutine_function_list=[get_config_async]
         )
-        self.assertEqual(0, config["FIRST"])
-        self.assertEqual("1", config["SECOND"])
-        self.assertEqual("2", config["THIRD"])
-        self.assertEqual(3, config["FOURTH"])
-        config.access_config_from_function_list()
-        self.assertEqual(3, config["FOURTH"])
         os.remove(current_json_file)
+
+        self.assertEqual(1, config["FIRST"])
+        self.assertEqual("2", config["SECOND"])
+        self.assertEqual("3", config["THIRD"])
+        self.assertEqual(4, config["FOURTH"])
+        config.access_config_from_function_list()
+        self.assertEqual(4, config["FOURTH"])
+        self.assertListEqual(
+            [1, 2, 2, 2, 3, 4],
+            list(map(lambda x: x.value, config.meta["FOURTH"].value_list)),
+        )

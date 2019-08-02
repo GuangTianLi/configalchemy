@@ -1,14 +1,14 @@
 import json
 import logging
 import time
-from threading import Thread
+import threading
 from typing import Any, Callable, Coroutine, List
 
 import requests
 
 from ..configalchemy import BaseConfig, ConfigType
 
-__all__ = ["ApolloBaseConfig"]
+time_counter = time.time
 
 
 class ConfigException(Exception):
@@ -45,14 +45,14 @@ class ApolloBaseConfig(BaseConfig):
     def get_from_namespace(
         self, key: str, namespace: str = "application", default=None
     ):
-        if namespace not in self["APOLLO_NOTIFICATION_MAP"]:
-            self["APOLLO_NAMESPACE"] = namespace
+        if namespace not in self.APOLLO_NOTIFICATION_MAP:
+            self.APOLLO_NAMESPACE = namespace
             access_config_from_apollo(self)
-        return self["APOLLO_NOTIFICATION_MAP"][namespace]["data"].get(key, default)
+        return self.APOLLO_NOTIFICATION_MAP[namespace]["data"].get(key, default)
 
     def start_long_poll(self):
         logging.info("start long poll")
-        thread = Thread(target=long_poll, kwargs={"current_config": self})
+        thread = threading.Thread(target=long_poll, kwargs={"current_config": self})
         thread.daemon = True
         thread.start()
         return thread
@@ -69,10 +69,12 @@ def access_config_from_apollo(current_config: ApolloBaseConfig) -> dict:
     response = requests.get(url)
     if response.ok:
         data = response.json()
-        current_config.APOLLO_NOTIFICATION_MAP[data["namespaceName"]] = {
-            "id": -1,
-            "data": data.get("configurations", {}),
-        }
+        current_config.APOLLO_NOTIFICATION_MAP.setdefault(
+            data["namespaceName"], {"id": -1}
+        )
+        current_config.APOLLO_NOTIFICATION_MAP[data["namespaceName"]][
+            "data"
+        ] = data.get("configurations", {})
         logging.debug(f"Got from apollo: {data}")
         return data.get("configurations", {})
     else:
@@ -114,17 +116,18 @@ def long_poll_from_apollo(current_config: ApolloBaseConfig):
 
 
 def long_poll(current_config: ApolloBaseConfig):
-    start_time = time.time()
+    start_time = time_counter()
 
     while True:
         try:
             logging.debug("start long poll")
             long_poll_from_apollo(current_config)
-            now = time.time()
+            now = time_counter()
             if now - start_time > 300:
                 for namespace in current_config.APOLLO_NOTIFICATION_MAP:
                     current_config.APOLLO_NAMESPACE = namespace
-                start_time = time.time()
+                    current_config.access_config_from_function_list()
+                start_time = time_counter()
         except ConfigException:
             time.sleep(5)
         except Exception:

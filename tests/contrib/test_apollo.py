@@ -1,10 +1,12 @@
+from threading import Thread
 import time
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import requests
 
-from configalchemy.contrib.apollo import ApolloBaseConfig
+import configalchemy.contrib.apollo
+from configalchemy.contrib.apollo import ApolloBaseConfig, ConfigException, long_poll
 
 return_value = {"namespaceName": "tmp", "configurations": {"TEST": "changed"}}
 
@@ -23,10 +25,9 @@ def mock_get(url: str, params: dict = None, timeout: int = 5):
 
 
 class ApolloConfigTestCase(unittest.TestCase):
-    def test_ApolloConfig(self):
+    @patch.object(ApolloBaseConfig, "start_long_poll")
+    def test_ApolloConfig(self, start_long_poll):
         requests.get = mock_get
-        long_poll = Mock()
-        ApolloBaseConfig.start_long_poll = long_poll
 
         class DefaultConfig(ApolloBaseConfig):
             TEST = "base"
@@ -39,26 +40,58 @@ class ApolloConfigTestCase(unittest.TestCase):
 
         config = DefaultConfig()
         self.assertEqual("changed", config["TEST"])
-        self.assertEqual(1, long_poll.call_count)
+        self.assertEqual(1, start_long_poll.call_count)
 
-    def test_long_poll(self):
+    @patch.object(requests, "get")
+    @patch.object(configalchemy.contrib.apollo, "time_counter")
+    @patch.object(time, "sleep")
+    def test_long_poll(self, time_sleep, time_counter, requests_get):
         class DefaultConfig(ApolloBaseConfig):
             TEST = "base"
-
+            ENABLE_FUNCTION = False
             #: apollo
             APOLLO_SERVER_URL = ""
             APOLLO_APP_ID = ""
             APOLLO_CLUSTER = "default"
             APOLLO_NAMESPACE = "application"
 
-        requests.get = mock_get
-        return_value["namespaceName"] = "application"
+        count = 0
+
+        def time_counter_side_effect():
+            nonlocal count
+            if count == 0:
+                count += 1
+                return 0
+            elif count == 1:
+                count += 1
+                return 99999
+            else:
+                raise ConfigException("break")
+
         config = DefaultConfig()
-        return_value["namespaceName"] = "tmp"
+        requests_get.side_effect = mock_get
+
         self.assertEqual("changed", config.get_from_namespace("TEST", namespace="tmp"))
-        thread = config.start_long_poll()
-        time.sleep(1)
+        return_value["namespaceName"] = "application"
+        time_counter.side_effect = time_counter_side_effect
+        time_sleep.side_effect = ConfigException("break")
+
+        with self.assertRaises(ConfigException):
+            long_poll(config)
+
         self.assertEqual("changed", config["TEST"])
+        self.assertIn("application", config.APOLLO_NOTIFICATION_MAP)
+
+    def test_start_long_poll(self):
+        class DefaultConfig(ApolloBaseConfig):
+            ENABLE_FUNCTION = False
+
+        config = DefaultConfig()
+        with patch("threading.Thread") as MockThread:
+            config.start_long_poll()
+            MockThread.assert_called_with(
+                target=long_poll, kwargs={"current_config": config}
+            )
 
 
 if __name__ == "__main__":

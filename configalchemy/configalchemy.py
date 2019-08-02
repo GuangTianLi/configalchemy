@@ -4,57 +4,51 @@ import errno
 import json
 import logging
 import os
-from collections import defaultdict
 from threading import Lock
-from typing import (
-    Any,
-    Callable,
-    Coroutine,
-    DefaultDict,
-    KeysView,
-    List,
-    Tuple,
-    MutableMapping,
-)
-
+from typing import Any, Callable, Coroutine, KeysView, List, Tuple, MutableMapping, Dict
 
 _miss = lambda _: _
 
 ConfigType = MutableMapping[str, Any]
 
 
+class ConfigItem:
+    def __init__(self, priority: int, value: Any):
+        self.priority = priority
+        self.value = value
+
+    def __repr__(self) -> str:
+        return f"'priority : {self.priority}, value : {self.value}'"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
 class _ConfigMeta:
-    def __init__(self, default=None):
-        self.value_type: Callable[[Any], Any] = _miss
-        self.default_value = default
-        self.function_value = None
-        self.config_file_value = None
-        self.env_value = None
+    def __init__(self, default_value: Any):
+        self.value_type: Callable[[Any], Any] = type(default_value)
+        self.value_list: List[ConfigItem] = [ConfigItem(0, default_value)]
 
-    def get_config(self) -> Any:
-        if self.env_value is not None:
-            return self.env_value
-        elif self.config_file_value is not None:
-            return self.config_file_value
-        elif self.function_value is not None:
-            return self.function_value
-        else:
-            return self.default_value
+    @property
+    def value(self) -> Any:
+        return self.value_list[-1].value
 
-    def get(self) -> Any:
-        return self.get_config()
-
-    def set(self, priority: int, value: Any) -> bool:
+    def set(self, priority: int, value: Any) -> None:
         value = self.value_type(value)
-        if priority == 0:
-            self.default_value = value
-        elif priority == 1:
-            self.function_value = value
-        elif priority == 2:
-            self.config_file_value = value
+        item = ConfigItem(priority, value)
+        length = len(self.value_list)
+        for index in range(length - 1, 0, -1):
+            if self.value_list[index - 1].priority <= priority:
+                self.value_list.insert(index, item)
+                break
         else:
-            self.env_value = value
-        return True
+            self.value_list.insert(1, item)
+
+    def __repr__(self) -> str:
+        return repr(self.value)
+
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 class BaseConfig(ConfigType):
@@ -80,7 +74,7 @@ class BaseConfig(ConfigType):
         root_path: str = "",
     ):
         self.lock = Lock()
-        self.config_meta: DefaultDict[str, _ConfigMeta] = defaultdict(_ConfigMeta)
+        self.meta: Dict[str, _ConfigMeta] = {}
         self.root_path = root_path
         self.function_list = function_list or []
         self.coroutine_function_list = coroutine_function_list or []
@@ -109,6 +103,7 @@ class BaseConfig(ConfigType):
                 loop.run_until_complete(
                     self.access_config_from_coroutine_function_list()
                 )
+        super().__init__()
 
     def _setup(self):
         """Setup the default values and type of value from self.
@@ -116,8 +111,7 @@ class BaseConfig(ConfigType):
         for key in dir(self):
             if key.isupper():
                 default_value = getattr(self, key)
-                self._set_value(key, default_value, priority=0)
-                self.config_meta[key].value_type = type(default_value)
+                self.meta[key] = _ConfigMeta(default_value=default_value)
                 setattr(self.__class__, key, _ConfigAttribute(key))
         return True
 
@@ -190,47 +184,52 @@ class BaseConfig(ConfigType):
 
     def _set_value(self, key: str, value: Any, priority: int):
         with self.lock:
-            self.config_meta[key].set(priority=priority, value=value)
+            self.meta[key].set(priority=priority, value=value)
 
     def __getitem__(self, key: str) -> Any:
         """ x.__getitem__(y) <==> x[y] """
         with self.lock:
-            if key not in self.config_meta:
-                raise KeyError(key)
-            return self.config_meta[key].get()
+            return self.meta[key].value
 
     def items(self) -> List[Tuple[str, Any]]:  # type: ignore
-        return [
-            (key, config_meta.get()) for key, config_meta in self.config_meta.items()
-        ]
+        return [(key, config_meta.value) for key, config_meta in self.meta.items()]
 
     def keys(self) -> KeysView[str]:
-        return self.config_meta.keys()
+        return self.meta.keys()
 
     def __contains__(self, key: object) -> bool:
-        return key in self.config_meta
+        return key in self.meta
 
     def __iter__(self):
-        return iter(self.config_meta)
+        return iter(self.meta)
 
     def __len__(self) -> int:
-        return len(self.config_meta)
+        return len(self.meta)
 
     def __setitem__(self, k, v) -> None:
         self._set_value(k, v, priority=3)
 
     def __delitem__(self, key) -> None:
-        del self.config_meta[key]
+        del self.meta[key]
 
     def update(self, __m, **kwargs):
         self.from_mapping(__m, kwargs, priority=3)
 
     def get(self, key: str, default=None):
         with self.lock:
-            return self.config_meta.get(key, _ConfigMeta(default=default)).get()
+            if key in self.meta:
+                return self.meta[key].value
+            else:
+                return default
 
     def __bool__(self) -> bool:
-        return bool(self.config_meta)
+        return bool(self.meta)
+
+    def __repr__(self) -> str:
+        return repr(self.meta)
+
+    def __str__(self) -> str:
+        return repr(self)
 
 
 class _ConfigAttribute:
