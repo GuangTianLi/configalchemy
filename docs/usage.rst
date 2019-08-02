@@ -2,6 +2,13 @@
 Usage
 =====
 
-To use ConfigAlchemy in a project::
+To use ConfigAlchemy in a project.
 
-    import configalchemy
+.. code-block:: python
+
+    from configalchemy import BaseConfig
+
+    class DefaultObject(BaseConfig):
+        TEST = "test"
+
+    config = DefaultObject()

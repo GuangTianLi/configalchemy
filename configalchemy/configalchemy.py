@@ -26,7 +26,7 @@ class ConfigItem:
 
 class _ConfigMeta:
     def __init__(self, default_value: Any):
-        self.value_type: Callable[[Any], Any] = type(default_value)
+        self.type_cast: Callable[[Any], Any] = type(default_value)
         self.value_list: List[ConfigItem] = [ConfigItem(0, default_value)]
 
     @property
@@ -34,7 +34,7 @@ class _ConfigMeta:
         return self.value_list[-1].value
 
     def set(self, priority: int, value: Any) -> None:
-        value = self.value_type(value)
+        value = self.type_cast(value)
         item = ConfigItem(priority, value)
         length = len(self.value_list)
         for index in range(length - 1, 0, -1):
@@ -58,12 +58,33 @@ class BaseConfig(ConfigType):
 
     Example of module-based configuration::
 
-        pass
+        class DefaultObject(BaseConfig):
+            TEST = "test"
+
+        config = DefaultObject()
     """
 
-    ENV_PREFIX = ""
-    CONFIG_FILE = ""
-    ENABLE_FUNCTION = False
+    # The prefix to construct the full environment variable key to access overrode config.
+    CONFIGALCHEMY_ENV_PREFIX = ""
+    CONFIGALCHEMY_ENVIRONMENT_VALUE_PRIORITY = 3
+
+    # The the filename of the JSON file. This can either be
+    # an absolute filename or a filename relative to the
+    # `CONFIGALCHEMY_ROOT_PATH`.
+    CONFIGALCHEMY_ROOT_PATH = ""
+    CONFIGALCHEMY_CONFIG_FILE = ""
+    CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY = 2
+    # set to ``True`` if you want silent failure for missing files.
+    CONFIGALCHEMY_LOAD_FILE_SILENT = False
+
+    # set to ``True`` if you want to override config from function return value.
+    CONFIGALCHEMY_ENABLE_FUNCTION = False
+    CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = 1
+
+    # The priority of config['TEST'] = value,
+    # config.TEST = value and
+    # config.update(TEST=value)
+    CONFIGALCHEMY_SETITEM_PRIORITY = 99
 
     def __init__(
         self,
@@ -71,37 +92,37 @@ class BaseConfig(ConfigType):
         coroutine_function_list: List[
             Callable[[Any], Coroutine[Any, Any, ConfigType]]
         ] = None,
-        root_path: str = "",
     ):
         self.lock = Lock()
         self.meta: Dict[str, _ConfigMeta] = {}
-        self.root_path = root_path
         self.function_list = function_list or []
         self.coroutine_function_list = coroutine_function_list or []
 
         self._setup()
 
         #: env
-        env_prefix = self.get("ENV_PREFIX", "")
-        if env_prefix:
-            self.from_env(prefix=env_prefix)
+        if self.CONFIGALCHEMY_ENV_PREFIX:
+            self._from_env()
 
-        #: local config file
-        config_file = self.get("CONFIG_FILE", "")
-        if config_file:
-            self.from_file(config_file)
+        #: config file
+        if self.CONFIGALCHEMY_CONFIG_FILE:
+            self._from_file()
 
         #: function
-        if self.get("ENABLE_FUNCTION", False):
+        if self.CONFIGALCHEMY_ENABLE_FUNCTION:
             #: Sync
             if self.function_list:
-                self.access_config_from_function_list()
+                self.access_config_from_function_list(
+                    priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+                )
 
             # Async
             loop = asyncio.get_event_loop()
             if self.coroutine_function_list:
                 loop.run_until_complete(
-                    self.access_config_from_coroutine_function_list()
+                    self.access_config_from_coroutine_function_list(
+                        priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+                    )
                 )
         super().__init__()
 
@@ -112,33 +133,33 @@ class BaseConfig(ConfigType):
             if key.isupper():
                 default_value = getattr(self, key)
                 self.meta[key] = _ConfigMeta(default_value=default_value)
-                setattr(self.__class__, key, _ConfigAttribute(key))
+                setattr(self.__class__, key, _ConfigAttribute(key, default_value))
         return True
 
-    def from_file(self, filename: str, silent: bool = False, priority: int = 2) -> bool:
+    def _from_file(self) -> bool:
         """Updates the values in the config from a JSON file. This function
         behaves as if the JSON object was a dictionary and passed to the
         :meth:`from_mapping` function.
-
-        :param str filename: the filename of the JSON file. This can either be
-                            an absolute filename or a filename relative to the
-                            root path.
-        :param bool silent: set to ``True`` if you want silent failure for missing
-                       files.
-
         """
-        filename = os.path.join(self.root_path, filename)
+        filename = os.path.join(
+            self.CONFIGALCHEMY_ROOT_PATH, self.CONFIGALCHEMY_CONFIG_FILE
+        )
         try:
             with open(filename) as f:
                 obj = json.load(f)
         except IOError as e:
-            if silent and e.errno in (errno.ENOENT, errno.EISDIR):
+            if self.CONFIGALCHEMY_LOAD_FILE_SILENT and e.errno in (
+                errno.ENOENT,
+                errno.EISDIR,
+            ):
                 return False
             e.strerror = "Unable to load configuration file (%s)" % e.strerror
             raise
         else:
             logging.info(f"Loaded configuration file: {filename}")
-            return self.from_mapping(obj, priority=priority)
+            return self.from_mapping(
+                obj, priority=self.CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY
+            )
 
     def from_mapping(self, *mappings: ConfigType, priority: int) -> bool:
         """Updates the config like :meth:`update` ignoring items with non-upper
@@ -150,33 +171,28 @@ class BaseConfig(ConfigType):
                     self._set_value(key, value, priority=priority)
         return True
 
-    def from_env(self, prefix: str, priority: int = 3) -> bool:
+    def _from_env(self) -> bool:
         """Updates the values in the config from the environment variable.
-
-        :param str prefix: The prefix to construct the full environment variable
-                        with the key.
-
         """
         for key, value in self.items():
-            env_value = os.getenv(f"{prefix}{key}")
+            env_value = os.getenv(f"{self.CONFIGALCHEMY_ENV_PREFIX}{key}")
             if env_value is not None:
-                self._set_value(key, env_value, priority=priority)
+                self._set_value(
+                    key,
+                    env_value,
+                    priority=self.CONFIGALCHEMY_ENVIRONMENT_VALUE_PRIORITY,
+                )
         return True
 
-    def access_config_from_function_list(self, priority: int = 1) -> bool:
+    def access_config_from_function_list(self, priority: int) -> bool:
         """Updates the values in the config from the sync_access_config_list.
-
-
         """
         for function in self.function_list:
             self.from_mapping(function(self), priority=priority)
         return True
 
-    async def access_config_from_coroutine_function_list(
-        self, priority: int = 1
-    ) -> bool:
+    async def access_config_from_coroutine_function_list(self, priority: int) -> bool:
         """Async updates the values in the config from the async_access_config_list.
-
         """
         for coroutine_function in self.coroutine_function_list:
             self.from_mapping(await coroutine_function(self), priority=priority)
@@ -207,13 +223,13 @@ class BaseConfig(ConfigType):
         return len(self.meta)
 
     def __setitem__(self, k, v) -> None:
-        self._set_value(k, v, priority=3)
+        self._set_value(k, v, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)
 
     def __delitem__(self, key) -> None:
         del self.meta[key]
 
     def update(self, __m, **kwargs):
-        self.from_mapping(__m, kwargs, priority=3)
+        self.from_mapping(__m, kwargs, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)
 
     def get(self, key: str, default=None):
         with self.lock:
@@ -233,13 +249,17 @@ class BaseConfig(ConfigType):
 
 
 class _ConfigAttribute:
-    def __init__(self, name: str):
+    def __init__(self, name: str, default_value: Any):
         self._name = name
+        self._default_value = default_value
 
     def __get__(self, obj: BaseConfig, type=None) -> Any:
         if obj is None:
             return self
-        return obj[self._name]
+        if self._name not in obj:
+            return self._default_value
+        else:
+            return obj[self._name]
 
     def __set__(self, instance: BaseConfig, value: Any) -> None:
         instance[self._name] = value

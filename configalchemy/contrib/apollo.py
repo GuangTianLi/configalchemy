@@ -1,7 +1,7 @@
 import json
 import logging
-import time
 import threading
+import time
 from typing import Any, Callable, Coroutine, List
 
 import requests
@@ -16,7 +16,7 @@ class ConfigException(Exception):
 
 
 class ApolloBaseConfig(BaseConfig):
-    ENABLE_FUNCTION = True
+    CONFIGALCHEMY_ENABLE_FUNCTION = True
 
     #: apollo
     APOLLO_USING_CACHE = False
@@ -38,7 +38,7 @@ class ApolloBaseConfig(BaseConfig):
     ):
         function_list = function_list or []
         function_list.append(access_config_from_apollo)
-        super().__init__(function_list, coroutine_function_list, root_path)
+        super().__init__(function_list, coroutine_function_list)
         if self.get("ENABLE_LONG_POLL", False):
             self.start_long_poll()
 
@@ -107,7 +107,9 @@ def long_poll_from_apollo(current_config: ApolloBaseConfig):
                 % (entry["namespaceName"], entry["notificationId"])
             )
             current_config.APOLLO_NAMESPACE = entry["namespaceName"]
-            current_config.access_config_from_function_list()
+            current_config.access_config_from_function_list(
+                priority=current_config.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+            )
             current_config.APOLLO_NOTIFICATION_MAP[entry["namespaceName"]][
                 "id"
             ] = entry["notificationId"]
@@ -126,7 +128,9 @@ def long_poll(current_config: ApolloBaseConfig):
             if now - start_time > 300:
                 for namespace in current_config.APOLLO_NOTIFICATION_MAP:
                     current_config.APOLLO_NAMESPACE = namespace
-                    current_config.access_config_from_function_list()
+                    current_config.access_config_from_function_list(
+                        priority=current_config.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+                    )
                 start_time = time_counter()
         except ConfigException:
             time.sleep(5)

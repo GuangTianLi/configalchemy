@@ -48,7 +48,7 @@ class ApolloConfigTestCase(unittest.TestCase):
     def test_long_poll(self, time_sleep, time_counter, requests_get):
         class DefaultConfig(ApolloBaseConfig):
             TEST = "base"
-            ENABLE_FUNCTION = False
+            CONFIGALCHEMY_ENABLE_FUNCTION = False
             #: apollo
             APOLLO_SERVER_URL = ""
             APOLLO_APP_ID = ""
@@ -84,7 +84,7 @@ class ApolloConfigTestCase(unittest.TestCase):
 
     def test_start_long_poll(self):
         class DefaultConfig(ApolloBaseConfig):
-            ENABLE_FUNCTION = False
+            CONFIGALCHEMY_ENABLE_FUNCTION = False
 
         config = DefaultConfig()
         with patch("threading.Thread") as MockThread:
