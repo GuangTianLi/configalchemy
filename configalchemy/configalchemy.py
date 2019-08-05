@@ -26,7 +26,14 @@ class ConfigItem:
 
 class _ConfigMeta:
     def __init__(self, default_value: Any):
-        self.type_cast: Callable[[Any], Any] = type(default_value)
+        self.typecast: Callable[[Any], Any] = getattr(
+            default_value, "__typecast__", type(default_value)
+        )
+        self.instance_check: Callable[[Any], bool] = getattr(
+            default_value,
+            "__isinstance__",
+            lambda x: isinstance(x, type(default_value)),
+        )
         self.value_list: List[ConfigItem] = [ConfigItem(0, default_value)]
 
     @property
@@ -34,7 +41,8 @@ class _ConfigMeta:
         return self.value_list[-1].value
 
     def set(self, priority: int, value: Any) -> None:
-        value = self.type_cast(value)
+        if not self.instance_check(value):
+            value = self.typecast(value)
         item = ConfigItem(priority, value)
         length = len(self.value_list)
         for index in range(length - 1, 0, -1):
