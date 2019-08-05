@@ -4,10 +4,9 @@ T = TypeVar("T")
 
 
 class GenericConfigMixin:
-    def __new__(cls, value: T, *, typecast: Callable[[Any], Any]) -> T:
-        self = super().__new__(cls, value)
+    def __init__(self, value: T, *, typecast: Callable[[Any], Any]):
+        super().__init__(value)
         self.__typecast__ = typecast
-        return self
 
     @classmethod
     def __isinstance__(cls, value) -> bool:
