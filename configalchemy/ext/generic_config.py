@@ -5,7 +5,7 @@ T = TypeVar("T")
 
 class GenericConfigMixin:
     def __init__(self, value: T, *, typecast: Callable[[Any], Any]):
-        super().__init__(value)
+        super().__init__(value)  # type: ignore
         self.__typecast__ = typecast
 
     @classmethod
