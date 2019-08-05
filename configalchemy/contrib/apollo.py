@@ -34,7 +34,6 @@ class ApolloBaseConfig(BaseConfig):
         coroutine_function_list: List[
             Callable[[Any], Coroutine[Any, Any, ConfigType]]
         ] = None,
-        root_path: str = "",
     ):
         function_list = function_list or []
         function_list.append(access_config_from_apollo)

@@ -64,12 +64,12 @@ class BaseConfig(ConfigType):
 
         ** config from env > config from local file > config from function > default config **
 
-    Example of module-based configuration::
+    Example of class-based configuration::
 
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             TEST = "test"
 
-        config = DefaultObject()
+        config = DefaultConfig()
     """
 
     # The prefix to construct the full environment variable key to access overrode config.

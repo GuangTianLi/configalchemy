@@ -18,6 +18,9 @@ ConfigAlchemy
 .. image:: https://codecov.io/gh/GuangTianLi/configalchemy/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/GuangTianLi/configalchemy
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+  :target: https://github.com/psf/black
+
 
 
 The Settings and Configuration on ideal practices for app development.
@@ -43,32 +46,36 @@ Example
 
         from configalchemy import BaseConfig
 
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             TEST = "test"
 
-        config = DefaultObject()
-        print(config.TEST) # attribute style access
-        print(config['TEST']) # dict item style access
-        print(config.get('TEST')) # dict get style access
-        print(config.get('HOST', 'local')) # Providing defaults
+        config = DefaultConfig()
+        config.TEST # attribute style access
+        >>> 'test'
+        config['TEST'] # dict item style access
+        >>> 'test'
+        config.get('TEST') # dict get style access
+        >>> 'test'
+        config.get('HOST', 'local') # Providing defaults
+        >>> 'local'
 
 Features
 ----------
 
-- Configurable Dynamic configurator
+- Configurable dynamic configurator
 - Configuration-Oriented Development
 
     - Define default config value and its type which is used in your project
     - Use class to support inheritance to explicitly define configurable config
 
-- override config value from multiple source with **priority supported**
+- Override config value from multiple source with **priority supported**
 
     - Callable function return value
     - File (json)
     - Environment Variables
 
-- **Force typecast** before overriding
-- Inherit from typing.MutableMapping
+- **Proper Typecast** before overriding
+- Generic Config Type Support by custom typecast
 
 - Extension
 
@@ -77,4 +84,4 @@ Features
 TODO
 -------
 
-* Complex Config Type Support
+- Add More Proper Log

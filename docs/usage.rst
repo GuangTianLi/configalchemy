@@ -10,10 +10,10 @@ To use ConfigAlchemy in a project.
 
     from configalchemy import BaseConfig
 
-    class DefaultObject(BaseConfig):
+    class DefaultConfig(BaseConfig):
         TEST = "test"
 
-    config = DefaultObject()
+    config = DefaultConfig()
 
 How to Use the Config
 ==============================================
@@ -86,11 +86,11 @@ Define **CONFIGALCHEMY_CONFIG_FILE** to enable access config from config file:
 
     from configalchemy import BaseConfig
 
-    class DefaultObject(BaseConfig):
+    class DefaultConfig(BaseConfig):
         CONFIGALCHEMY_CONFIG_FILE = 'test.json' #: etc: {'NAME': 'json'}
         NAME = 'base'
 
-    config = DefaultObject()
+    config = DefaultConfig()
 
     >>> config['NAME']
     json
@@ -110,13 +110,13 @@ Define **CONFIGALCHEMY_ENABLE_FUNCTION** to enable access your config from funct
     def get_config(current_config: dict) -> dict:
         return {'NAME': 'sync'}
 
-    class DefaultObject(BaseConfig):
+    class DefaultConfig(BaseConfig):
         ENABLE_CONFIG_LIST = True
         TYPE = 'base'
         NAME = 'base'
 
 
-    config = DefaultObject(
+    config = DefaultConfig(
         function_list=[get_config],
         coroutine_function_list=[get_config_async])
 
@@ -125,4 +125,29 @@ Define **CONFIGALCHEMY_ENABLE_FUNCTION** to enable access your config from funct
     >>> config['NAME']
     sync
 
+Using Generic Config Type(List, Dict...)
+----------------------------------------------------
 
+Define custom typecast function to support complex config type:
+
+.. code-block:: python
+
+    import json
+    import os
+
+    from configalchemy import BaseConfig
+    from configalchemy.ext.generic_config import ListConfig, DictConfig
+
+    class DefaultConfig(BaseConfig):
+        CONFIGALCHEMY_ENV_PREFIX = "TEST_"
+        TEST_LIST = ListConfig(["str"], typecast=json.loads)
+        TEST_DICT = DictConfig({"name": "default"}, typecast=typecast)
+
+    os.environ["TEST_TEST_LIST"] = json.dumps(["test"]))
+    os.environ["TEST_TEST_DICT"] = json.dumps({"name": "test"}))
+
+    config = DefaultConfig()
+    config.TEST_LIST
+    >>> ["test"]
+    config.TEST_DICT
+    >>> {"name": "test"}

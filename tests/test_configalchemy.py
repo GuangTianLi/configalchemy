@@ -27,10 +27,10 @@ class ConfigalchemyTestCase(unittest.TestCase):
         os.remove(cls.json_file)
 
     def test_default_config_init_from_object(self):
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             TEST = "test"
 
-        config = DefaultObject()
+        config = DefaultConfig()
         self.assertEqual("test", config["TEST"])
         self.assertEqual("test", config.TEST)
         with self.assertRaises(KeyError):
@@ -55,61 +55,61 @@ class ConfigalchemyTestCase(unittest.TestCase):
             tmp = config["TEST"]
 
     def test_default_config_update_from_json(self):
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             CONFIGALCHEMY_CONFIG_FILE = self.json_file
 
             JSON_TEST = "default"
 
-        config = DefaultObject()
+        config = DefaultConfig()
 
         self.assertEqual("JSON_TEST", config["JSON_TEST"])
         self.assertEqual("JSON_TEST", config.JSON_TEST)
 
     def test_config_file_not_exist(self):
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             CONFIGALCHEMY_ENV_PREFIX = "CONFIGALCHEMY_"
             CONFIGALCHEMY_CONFIG_FILE = "not.exist"
 
         with self.assertRaises(IOError):
-            DefaultObject()
+            DefaultConfig()
 
         os.environ.setdefault("CONFIGALCHEMY_CONFIGALCHEMY_LOAD_FILE_SILENT", "True")
-        DefaultObject()
+        DefaultConfig()
 
     def test_config_with_env(self):
         os.environ["test_TEST"] = "changed"
 
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             CONFIGALCHEMY_ENV_PREFIX = "test_"
             TEST = "default"
 
-        config = DefaultObject()
+        config = DefaultConfig()
         self.assertEqual("changed", config["TEST"])
         self.assertEqual("changed", config.TEST)
 
     def test_update_config_from_function(self):
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
             TEST = "default"
 
-        def get_config(current_config: DefaultObject) -> ConfigType:
+        def get_config(current_config: DefaultConfig) -> ConfigType:
             self.assertTrue(current_config["CONFIGALCHEMY_ENABLE_FUNCTION"])
             return {"TEST": "changed"}
 
-        config = DefaultObject(function_list=[get_config])
+        config = DefaultConfig(function_list=[get_config])
         self.assertEqual("changed", config["TEST"])
         self.assertEqual("changed", config.TEST)
 
     def test_async_update_config_from_function(self):
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
             TEST = "default"
 
-        async def get_config_async(current_config: DefaultObject) -> ConfigType:
+        async def get_config_async(current_config: DefaultConfig) -> ConfigType:
             self.assertTrue(current_config["CONFIGALCHEMY_ENABLE_FUNCTION"])
             return {"TEST": "changed"}
 
-        config = DefaultObject(coroutine_function_list=[get_config_async])
+        config = DefaultConfig(coroutine_function_list=[get_config_async])
         self.assertEqual("changed", config["TEST"])
         self.assertEqual("changed", config.TEST)
 
@@ -120,7 +120,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
         with open(current_json_file, "w") as fp:
             json.dump({"THIRD": "3", "FOURTH": "3"}, fp)
 
-        class DefaultObject(BaseConfig):
+        class DefaultConfig(BaseConfig):
             # env
             CONFIGALCHEMY_ENV_PREFIX = "test_"
             # file
@@ -132,13 +132,13 @@ class ConfigalchemyTestCase(unittest.TestCase):
             THIRD = "1"
             FOURTH = 1
 
-        def get_config(current_config: DefaultObject) -> dict:
+        def get_config(current_config: DefaultConfig) -> dict:
             return {"SECOND": "2", "FOURTH": "2"}
 
-        async def get_config_async(current_config: DefaultObject) -> dict:
+        async def get_config_async(current_config: DefaultConfig) -> dict:
             return {"THIRD": 2, "FOURTH": 2}
 
-        config = DefaultObject(
+        config = DefaultConfig(
             function_list=[get_config], coroutine_function_list=[get_config_async]
         )
         os.remove(current_json_file)
