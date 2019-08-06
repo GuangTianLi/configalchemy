@@ -3,16 +3,19 @@ repos:
 - repo: local
   hooks:
 
-  - id: ipdb
-    name: ipdb
-    entry: pre_commit/check_python_debugger.sh
-    language: script
-    types: [python]
-    args: []
-
   - id: format
     name: format
     entry: pipenv run format
+    exclude: >
+        (?x)^(
+            docs/.+
+        )$
+    language: python
+    types: [python]
+
+  - id: lint
+    name: lint
+    entry: pipenv run lint
     exclude: >
         (?x)^(
             docs/.+

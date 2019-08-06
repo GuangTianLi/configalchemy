@@ -7,8 +7,6 @@ import os
 from threading import Lock
 from typing import Any, Callable, Coroutine, KeysView, List, Tuple, MutableMapping, Dict
 
-_miss = lambda _: _
-
 ConfigType = MutableMapping[str, Any]
 
 
