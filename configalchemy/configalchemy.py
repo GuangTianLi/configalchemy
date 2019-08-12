@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from threading import Lock
-from typing import Any, Callable, Coroutine, KeysView, List, Tuple, MutableMapping, Dict
+from typing import Any, Callable, KeysView, List, Tuple, MutableMapping, Dict
 
 ConfigType = MutableMapping[str, Any]
 
@@ -92,17 +92,9 @@ class BaseConfig(ConfigType):
     # config.update(TEST=value)
     CONFIGALCHEMY_SETITEM_PRIORITY = 99
 
-    def __init__(
-        self,
-        function_list: List[Callable[[Any], ConfigType]] = None,
-        coroutine_function_list: List[
-            Callable[[Any], Coroutine[Any, Any, ConfigType]]
-        ] = None,
-    ):
+    def __init__(self):
         self.lock = Lock()
         self.meta: Dict[str, _ConfigMeta] = {}
-        self.function_list = function_list or []
-        self.coroutine_function_list = coroutine_function_list or []
 
         self._setup()
 
@@ -117,19 +109,17 @@ class BaseConfig(ConfigType):
         #: function
         if self.CONFIGALCHEMY_ENABLE_FUNCTION:
             #: Sync
-            if self.function_list:
-                self.access_config_from_function_list(
-                    priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
-                )
+            self.access_config_from_function(
+                priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+            )
 
             # Async
             loop = asyncio.get_event_loop()
-            if self.coroutine_function_list:
-                loop.run_until_complete(
-                    self.access_config_from_coroutine_function_list(
-                        priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
-                    )
+            loop.run_until_complete(
+                self.access_config_from_coroutine_function(
+                    priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
                 )
+            )
         super().__init__()
 
     def _setup(self):
@@ -190,18 +180,22 @@ class BaseConfig(ConfigType):
                 )
         return True
 
-    def access_config_from_function_list(self, priority: int) -> bool:
+    def sync_function(self) -> ConfigType:
+        return {}
+
+    async def async_function(self) -> ConfigType:
+        return {}
+
+    def access_config_from_function(self, priority: int) -> bool:
         """Updates the values in the config from the sync_access_config_list.
         """
-        for function in self.function_list:
-            self.from_mapping(function(self), priority=priority)
+        self.from_mapping(self.sync_function(), priority=priority)
         return True
 
-    async def access_config_from_coroutine_function_list(self, priority: int) -> bool:
+    async def access_config_from_coroutine_function(self, priority: int) -> bool:
         """Async updates the values in the config from the async_access_config_list.
         """
-        for coroutine_function in self.coroutine_function_list:
-            self.from_mapping(await coroutine_function(self), priority=priority)
+        self.from_mapping(await self.async_function(), priority=priority)
         return True
 
     def _set_value(self, key: str, value: Any, priority: int):

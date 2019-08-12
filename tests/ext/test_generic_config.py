@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import Mock
 
-from configalchemy import BaseConfig
+from configalchemy import BaseConfig, ConfigType
 from configalchemy.ext.generic_config import ListConfig, DictConfig
 
 
@@ -16,10 +16,11 @@ class GenericConfigTestCase(unittest.TestCase):
             CONFIGALCHEMY_ENV_PREFIX = "TEST_"
             TEST_LIST = ListConfig(["str"], typecast=typecast)
 
+            def sync_function(self) -> ConfigType:
+                return {"TEST_LIST": ["FUNCTION"]}
+
         os.environ.setdefault("TEST_TEST_LIST", json.dumps(["test"]))
-        config = DefaultConfig(
-            function_list=[Mock(return_value={"TEST_LIST": ["FUNCTION"]})]
-        )
+        config = DefaultConfig()
 
         typecast.assert_called_with(json.dumps(["test"]))
         typecast.assert_called_once()
@@ -33,10 +34,11 @@ class GenericConfigTestCase(unittest.TestCase):
             CONFIGALCHEMY_ENV_PREFIX = "TEST_"
             TEST_DICT = DictConfig({"name": "default"}, typecast=typecast)
 
+            def sync_function(self) -> ConfigType:
+                return {"TEST_DICT": {"name": "function"}}
+
         os.environ.setdefault("TEST_TEST_DICT", json.dumps({"name": "test"}))
-        config = DefaultConfig(
-            function_list=[Mock(return_value={"TEST_DICT": {"name": "function"}})]
-        )
+        config = DefaultConfig()
 
         typecast.assert_called_with(json.dumps({"name": "test"}))
         typecast.assert_called_once()

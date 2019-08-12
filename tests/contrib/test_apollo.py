@@ -1,4 +1,3 @@
-from threading import Thread
 import time
 import unittest
 from unittest.mock import Mock, patch
@@ -6,7 +5,7 @@ from unittest.mock import Mock, patch
 import requests
 
 import configalchemy.contrib.apollo
-from configalchemy.contrib.apollo import ApolloBaseConfig, ConfigException, long_poll
+from configalchemy.contrib.apollo import ApolloBaseConfig, ConfigException
 
 return_value = {"namespaceName": "tmp", "configurations": {"TEST": "changed"}}
 
@@ -77,7 +76,7 @@ class ApolloConfigTestCase(unittest.TestCase):
         time_sleep.side_effect = ConfigException("break")
 
         with self.assertRaises(ConfigException):
-            long_poll(config)
+            config.long_poll()
 
         self.assertEqual("changed", config["TEST"])
         self.assertIn("application", config.APOLLO_NOTIFICATION_MAP)
@@ -89,9 +88,7 @@ class ApolloConfigTestCase(unittest.TestCase):
         config = DefaultConfig()
         with patch("threading.Thread") as MockThread:
             config.start_long_poll()
-            MockThread.assert_called_with(
-                target=long_poll, kwargs={"current_config": config}
-            )
+            MockThread.assert_called_with(target=config.long_poll)
 
 
 if __name__ == "__main__":

@@ -92,11 +92,10 @@ class ConfigalchemyTestCase(unittest.TestCase):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
             TEST = "default"
 
-        def get_config(current_config: DefaultConfig) -> ConfigType:
-            self.assertTrue(current_config["CONFIGALCHEMY_ENABLE_FUNCTION"])
-            return {"TEST": "changed"}
+            def sync_function(self) -> ConfigType:
+                return {"TEST": "changed"}
 
-        config = DefaultConfig(function_list=[get_config])
+        config = DefaultConfig()
         self.assertEqual("changed", config["TEST"])
         self.assertEqual("changed", config.TEST)
 
@@ -105,11 +104,10 @@ class ConfigalchemyTestCase(unittest.TestCase):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
             TEST = "default"
 
-        async def get_config_async(current_config: DefaultConfig) -> ConfigType:
-            self.assertTrue(current_config["CONFIGALCHEMY_ENABLE_FUNCTION"])
-            return {"TEST": "changed"}
+            async def async_function(self) -> ConfigType:
+                return {"TEST": "changed"}
 
-        config = DefaultConfig(coroutine_function_list=[get_config_async])
+        config = DefaultConfig()
         self.assertEqual("changed", config["TEST"])
         self.assertEqual("changed", config.TEST)
 
@@ -132,24 +130,20 @@ class ConfigalchemyTestCase(unittest.TestCase):
             THIRD = "1"
             FOURTH = 1
 
-        def get_config(current_config: DefaultConfig) -> dict:
-            return {"SECOND": "2", "FOURTH": "2"}
+            def sync_function(self) -> ConfigType:
+                return {"SECOND": "2", "FOURTH": "2"}
 
-        async def get_config_async(current_config: DefaultConfig) -> dict:
-            return {"THIRD": 2, "FOURTH": 2}
+            async def async_function(self) -> ConfigType:
+                return {"THIRD": 2, "FOURTH": 2}
 
-        config = DefaultConfig(
-            function_list=[get_config], coroutine_function_list=[get_config_async]
-        )
+        config = DefaultConfig()
         os.remove(current_json_file)
 
         self.assertEqual(1, config["FIRST"])
         self.assertEqual("2", config["SECOND"])
         self.assertEqual("3", config["THIRD"])
         self.assertEqual(4, config["FOURTH"])
-        config.access_config_from_function_list(
-            config.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
-        )
+        config.access_config_from_function(config.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY)
         self.assertEqual(4, config["FOURTH"])
         self.assertListEqual(
             [1, 2, 2, 2, 3, 4],

@@ -101,24 +101,22 @@ Define **CONFIGALCHEMY_ENABLE_FUNCTION** to enable access your config from funct
 
 .. code-block:: python
 
-    from configalchemy import BaseConfig
+    from configalchemy import BaseConfig, ConfigType
 
-    async def get_config_async(current_config: dict) -> dict:
-        return {'TYPE': 'async'}
-
-
-    def get_config(current_config: dict) -> dict:
-        return {'NAME': 'sync'}
 
     class DefaultConfig(BaseConfig):
         ENABLE_CONFIG_LIST = True
-        TYPE = 'base'
-        NAME = 'base'
+        TYPE = "base"
+        NAME = "base"
+
+        def sync_function(self) -> ConfigType:
+            return {"NAME": "sync"}
+
+        async def async_function(self) -> ConfigType:
+            return {"TYPE": "async"}
 
 
-    config = DefaultConfig(
-        function_list=[get_config],
-        coroutine_function_list=[get_config_async])
+    config = DefaultConfig()
 
     >>> config['TYPE']
     async

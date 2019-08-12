@@ -2,7 +2,6 @@ import json
 import logging
 import threading
 import time
-from typing import Any, Callable, Coroutine, List
 
 import requests
 
@@ -28,16 +27,8 @@ class ApolloBaseConfig(BaseConfig):
     ENABLE_LONG_POLL = False
     APOLLO_NOTIFICATION_MAP: ConfigType = {}
 
-    def __init__(
-        self,
-        function_list: List[Callable[[Any], ConfigType]] = None,
-        coroutine_function_list: List[
-            Callable[[Any], Coroutine[Any, Any, ConfigType]]
-        ] = None,
-    ):
-        function_list = function_list or []
-        function_list.append(access_config_from_apollo)
-        super().__init__(function_list, coroutine_function_list)
+    def __init__(self):
+        super().__init__()
         if self.get("ENABLE_LONG_POLL", False):
             self.start_long_poll()
 
@@ -46,92 +37,87 @@ class ApolloBaseConfig(BaseConfig):
     ):
         if namespace not in self.APOLLO_NOTIFICATION_MAP:
             self.APOLLO_NAMESPACE = namespace
-            access_config_from_apollo(self)
+            self.sync_function()
         return self.APOLLO_NOTIFICATION_MAP[namespace]["data"].get(key, default)
 
     def start_long_poll(self):
         logging.info("start long poll")
-        thread = threading.Thread(target=long_poll, kwargs={"current_config": self})
+        thread = threading.Thread(target=self.long_poll)
         thread.daemon = True
         thread.start()
         return thread
 
-
-def access_config_from_apollo(current_config: ApolloBaseConfig) -> dict:
-    route = "configs"
-    if current_config.APOLLO_USING_CACHE:
-        route = "configfiles"
-    url = (
-        f"{current_config.APOLLO_SERVER_URL}/{route}/{current_config.APOLLO_APP_ID}/"
-        f"{current_config.APOLLO_CLUSTER}/{current_config.APOLLO_NAMESPACE}"
-    )
-    response = requests.get(url)
-    if response.ok:
-        data = response.json()
-        current_config.APOLLO_NOTIFICATION_MAP.setdefault(
-            data["namespaceName"], {"id": -1}
+    def sync_function(self) -> ConfigType:
+        route = "configs"
+        if self.APOLLO_USING_CACHE:
+            route = "configfiles"
+        url = (
+            f"{self.APOLLO_SERVER_URL}/{route}/{self.APOLLO_APP_ID}/"
+            f"{self.APOLLO_CLUSTER}/{self.APOLLO_NAMESPACE}"
         )
-        current_config.APOLLO_NOTIFICATION_MAP[data["namespaceName"]][
-            "data"
-        ] = data.get("configurations", {})
-        logging.debug(f"Got from apollo: {data}")
-        return data.get("configurations", {})
-    else:
-        raise ConfigException("loading config failed")
-
-
-def long_poll_from_apollo(current_config: ApolloBaseConfig):
-    url = f"{current_config.APOLLO_SERVER_URL}/notifications/v2/"
-    notifications = []
-    for key, value in current_config.APOLLO_NOTIFICATION_MAP.items():
-        notifications.append({"namespaceName": key, "notificationId": value["id"]})
-
-    r = requests.get(
-        url=url,
-        params={
-            "appId": current_config.APOLLO_APP_ID,
-            "cluster": current_config.APOLLO_CLUSTER,
-            "notifications": json.dumps(notifications, ensure_ascii=False),
-        },
-        timeout=current_config.APOLLO_LONG_POLL_TIMEOUT,
-    )
-
-    if r.status_code == 304:
-        logging.info("Apollo No change, loop...")
-    elif r.status_code == 200:
-        data = r.json()
-        for entry in data:
-            logging.info(
-                "%s has changes: notificationId=%d"
-                % (entry["namespaceName"], entry["notificationId"])
+        response = requests.get(url)
+        if response.ok:
+            data = response.json()
+            self.APOLLO_NOTIFICATION_MAP.setdefault(data["namespaceName"], {"id": -1})
+            self.APOLLO_NOTIFICATION_MAP[data["namespaceName"]]["data"] = data.get(
+                "configurations", {}
             )
-            current_config.APOLLO_NAMESPACE = entry["namespaceName"]
-            current_config.access_config_from_function_list(
-                priority=current_config.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
-            )
-            current_config.APOLLO_NOTIFICATION_MAP[entry["namespaceName"]][
-                "id"
-            ] = entry["notificationId"]
-    else:
-        logging.info("Sleep...")
+            logging.debug(f"Got from apollo: {data}")
+            return data.get("configurations", {})
+        else:
+            raise ConfigException("loading config failed")
 
+    def long_poll_from_apollo(self):
+        url = f"{self.APOLLO_SERVER_URL}/notifications/v2/"
+        notifications = []
+        for key, value in self.APOLLO_NOTIFICATION_MAP.items():
+            notifications.append({"namespaceName": key, "notificationId": value["id"]})
 
-def long_poll(current_config: ApolloBaseConfig):
-    start_time = time_counter()
+        r = requests.get(
+            url=url,
+            params={
+                "appId": self.APOLLO_APP_ID,
+                "cluster": self.APOLLO_CLUSTER,
+                "notifications": json.dumps(notifications, ensure_ascii=False),
+            },
+            timeout=self.APOLLO_LONG_POLL_TIMEOUT,
+        )
 
-    while True:
-        try:
-            logging.debug("start long poll")
-            long_poll_from_apollo(current_config)
-            now = time_counter()
-            if now - start_time > 300:
-                for namespace in current_config.APOLLO_NOTIFICATION_MAP:
-                    current_config.APOLLO_NAMESPACE = namespace
-                    current_config.access_config_from_function_list(
-                        priority=current_config.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
-                    )
-                start_time = time_counter()
-        except ConfigException:
-            time.sleep(5)
-        except Exception:
-            logging.exception("long poll error")
+        if r.status_code == 304:
+            logging.info("Apollo No change, loop...")
+        elif r.status_code == 200:
+            data = r.json()
+            for entry in data:
+                logging.info(
+                    "%s has changes: notificationId=%d"
+                    % (entry["namespaceName"], entry["notificationId"])
+                )
+                self.APOLLO_NAMESPACE = entry["namespaceName"]
+                self.access_config_from_function(
+                    priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+                )
+                self.APOLLO_NOTIFICATION_MAP[entry["namespaceName"]]["id"] = entry[
+                    "notificationId"
+                ]
+        else:
+            logging.info("Sleep...")
+
+    def long_poll(self):
+        start_time = time_counter()
+
+        while True:
+            try:
+                logging.debug("start long poll")
+                self.long_poll_from_apollo()
+                now = time_counter()
+                if now - start_time > 300:
+                    for namespace in self.APOLLO_NOTIFICATION_MAP:
+                        self.APOLLO_NAMESPACE = namespace
+                        self.access_config_from_function(
+                            priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+                        )
+                    start_time = time_counter()
+            except ConfigException:
+                time.sleep(5)
+            except Exception:
+                logging.exception("long poll error")
