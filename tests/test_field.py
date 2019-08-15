@@ -13,6 +13,8 @@ class FieldTestCase(unittest.TestCase):
             self.assertEqual(0, int_field.validate(value))
         with self.assertRaises(ValidateException) as e:
             int_field.validate(".0")
+        self.assertIn(".0", str(e.exception))
+        self.assertIn(str(type(".0")), str(e.exception))
         self.assertEqual("TEST", e.exception.name)
         self.assertEqual(".0", e.exception.value)
 

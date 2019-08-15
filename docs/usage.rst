@@ -123,29 +123,51 @@ Define **CONFIGALCHEMY_ENABLE_FUNCTION** to enable access your config from funct
     >>> config['NAME']
     sync
 
-Using Generic Config Type(List, Dict...)
+
+Auto Validation and Dynamic typecast
+==============================================
+
+When new value is assigned to config, the value will be validated and typecast if possible and the process bases on
+default value or type annotations.
+
+.. code-block:: python
+
+    from typing import Optional
+    from configalchemy import BaseConfig
+
+    class DefaultConfig(BaseConfig):
+        id = 1
+        name = "Tony"
+        limit: Optional[int] = None
+
+    config = DefaultConfig()
+    config.id = '10'
+    print(config.id) # 10
+    config.limit = 10
+    print(config.limit) # 10
+
+Using Complex Config Type(List, Dict...)
 ----------------------------------------------------
 
-Define custom typecast function to support complex config type:
+Define custom typecast function to support complex config type
+
+- typecast function default `json.loads`:
 
 .. code-block:: python
 
     import json
-    import os
 
     from configalchemy import BaseConfig
     from configalchemy.ext.generic_config import ListConfig, DictConfig
 
     class DefaultConfig(BaseConfig):
-        CONFIGALCHEMY_ENV_PREFIX = "TEST_"
-        TEST_LIST = ListConfig(["str"], typecast=json.loads)
-        TEST_DICT = DictConfig({"name": "default"}, typecast=typecast)
-
-    os.environ["TEST_TEST_LIST"] = json.dumps(["test"]))
-    os.environ["TEST_TEST_DICT"] = json.dumps({"name": "test"}))
+        TEST_LIST = ListConfig(["str"])
+        TEST_DICT = DictConfig({"name": "default"})
 
     config = DefaultConfig()
+    config.TEST_LIST = json.dumps(["test"]))
     config.TEST_LIST
     >>> ["test"]
+    config.TEST_DICT = json.dumps({"name": "test"}))
     config.TEST_DICT
     >>> {"name": "test"}

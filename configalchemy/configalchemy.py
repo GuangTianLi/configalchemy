@@ -83,16 +83,7 @@ class BaseConfig(ConfigType):
         """
         for key in dir(self):
             if key.isupper():
-                default_value = getattr(self, key)
-                self.meta[key] = ConfigMeta(
-                    default_value=default_value,
-                    field=Field(
-                        name=key,
-                        default_value=default_value,
-                        value_type=getattr(self, "__annotations__", {}).get(key),
-                    ),
-                )
-                setattr(self.__class__, key, _ConfigAttribute(key, default_value))
+                self[key] = getattr(self, key)
         return True
 
     def _from_file(self) -> bool:
@@ -163,7 +154,18 @@ class BaseConfig(ConfigType):
 
     def _set_value(self, key: str, value: Any, priority: int):
         with self.lock:
-            self.meta[key].set(priority=priority, value=value)
+            if key not in self.meta:
+                self.meta[key] = ConfigMeta(
+                    default_value=value,
+                    field=Field(
+                        name=key,
+                        default_value=value,
+                        value_type=getattr(self, "__annotations__", {}).get(key),
+                    ),
+                )
+                setattr(self.__class__, key, _ConfigAttribute(key, value))
+            else:
+                self.meta[key].set(priority=priority, value=value)
 
     def __getitem__(self, key: str) -> Any:
         """ x.__getitem__(y) <==> x[y] """

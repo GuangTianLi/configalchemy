@@ -12,7 +12,7 @@ class ConfigMetaItem:
         self.value = value
 
     def __repr__(self) -> str:
-        return f"'priority : {self.priority}, value : {self.value}'"
+        return f"ConfigMetaItem(priority={self.priority}, value={self.value})"
 
     def __str__(self) -> str:
         return repr(self)

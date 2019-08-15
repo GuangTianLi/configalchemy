@@ -34,6 +34,11 @@ class MetaTestCase(unittest.TestCase):
             json.dumps({"TEST": default_value}),
             json.dumps({"TEST": config_meta}, cls=ConfigMetaJSONEncoder),
         )
+        self.assertEqual("0", str(config_meta))
+        self.assertEqual("0", repr(config_meta))
+        self.assertEqual(
+            "[ConfigMetaItem(priority=0, value=0)]", str(config_meta.value_list)
+        )
 
 
 if __name__ == "__main__":

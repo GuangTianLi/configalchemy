@@ -5,7 +5,7 @@ T = TypeVar("T")
 
 
 class GenericConfigMixin:
-    def __init__(self, value: T, *, typecast: Callable[[Any], Any] = json.dumps):
+    def __init__(self, value: T, *, typecast: Callable[[Any], Any] = json.loads):
         super().__init__(value)  # type: ignore
         self.__typecast__ = typecast
 
@@ -14,7 +14,7 @@ class GenericConfigMixin:
 
 
 class ListConfig(GenericConfigMixin, list):
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
 
         def __new__(cls, value: T, typecast: Callable[[Any], Any]) -> T:
             ...
@@ -24,7 +24,7 @@ class ListConfig(GenericConfigMixin, list):
 
 
 class DictConfig(GenericConfigMixin, dict):
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
 
         def __new__(cls, value: T, typecast: Callable[[Any], Any]) -> T:
             ...
