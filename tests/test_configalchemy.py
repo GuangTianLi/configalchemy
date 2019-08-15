@@ -31,6 +31,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
             TEST = "test"
 
         config = DefaultConfig()
+
         self.assertEqual("test", config["TEST"])
         self.assertEqual("test", config.TEST)
         with self.assertRaises(KeyError):
@@ -145,7 +146,3 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual(4, config["FOURTH"])
         config.access_config_from_function(config.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY)
         self.assertEqual(4, config["FOURTH"])
-        self.assertListEqual(
-            [1, 2, 2, 2, 3, 4],
-            list(map(lambda x: x.value, config.meta["FOURTH"].value_list)),
-        )

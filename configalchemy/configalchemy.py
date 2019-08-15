@@ -5,56 +5,12 @@ import json
 import logging
 import os
 from threading import Lock
-from typing import Any, Callable, KeysView, List, Tuple, MutableMapping, Dict
+from typing import Any, KeysView, List, Tuple, MutableMapping, Dict
+
+from configalchemy.field import Field
+from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
 
 ConfigType = MutableMapping[str, Any]
-
-
-class ConfigItem:
-    def __init__(self, priority: int, value: Any):
-        self.priority = priority
-        self.value = value
-
-    def __repr__(self) -> str:
-        return f"'priority : {self.priority}, value : {self.value}'"
-
-    def __str__(self) -> str:
-        return repr(self)
-
-
-class _ConfigMeta:
-    def __init__(self, default_value: Any):
-        self.typecast: Callable[[Any], Any] = getattr(
-            default_value, "__typecast__", type(default_value)
-        )
-        self.instance_check: Callable[[Any], bool] = getattr(
-            default_value,
-            "__isinstance__",
-            lambda x: isinstance(x, type(default_value)),
-        )
-        self.value_list: List[ConfigItem] = [ConfigItem(0, default_value)]
-
-    @property
-    def value(self) -> Any:
-        return self.value_list[-1].value
-
-    def set(self, priority: int, value: Any) -> None:
-        if not self.instance_check(value):
-            value = self.typecast(value)
-        item = ConfigItem(priority, value)
-        length = len(self.value_list)
-        for index in range(length - 1, 0, -1):
-            if self.value_list[index - 1].priority <= priority:
-                self.value_list.insert(index, item)
-                break
-        else:
-            self.value_list.insert(1, item)
-
-    def __repr__(self) -> str:
-        return repr(self.value)
-
-    def __str__(self) -> str:
-        return str(self.value)
 
 
 class BaseConfig(ConfigType):
@@ -72,20 +28,20 @@ class BaseConfig(ConfigType):
 
     # The prefix to construct the full environment variable key to access overrode config.
     CONFIGALCHEMY_ENV_PREFIX = ""
-    CONFIGALCHEMY_ENVIRONMENT_VALUE_PRIORITY = 3
+    CONFIGALCHEMY_ENVIRONMENT_VALUE_PRIORITY = 20
 
     # The the filename of the JSON file. This can either be
     # an absolute filename or a filename relative to the
     # `CONFIGALCHEMY_ROOT_PATH`.
     CONFIGALCHEMY_ROOT_PATH = ""
     CONFIGALCHEMY_CONFIG_FILE = ""
-    CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY = 2
+    CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY = 10
     # set to ``True`` if you want silent failure for missing files.
     CONFIGALCHEMY_LOAD_FILE_SILENT = False
 
     # set to ``True`` if you want to override config from function return value.
     CONFIGALCHEMY_ENABLE_FUNCTION = False
-    CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = 1
+    CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = 0
 
     # The priority of config['TEST'] = value,
     # config.TEST = value and
@@ -94,7 +50,7 @@ class BaseConfig(ConfigType):
 
     def __init__(self):
         self.lock = Lock()
-        self.meta: Dict[str, _ConfigMeta] = {}
+        self.meta: Dict[str, ConfigMeta] = {}
 
         self._setup()
 
@@ -116,19 +72,26 @@ class BaseConfig(ConfigType):
             # Async
             loop = asyncio.get_event_loop()
             loop.run_until_complete(
-                self.access_config_from_coroutine_function(
+                self.access_config_from_coroutine(
                     priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
                 )
             )
         super().__init__()
 
     def _setup(self):
-        """Setup the default values and type of value from self.
+        """Setup the default values and field of value from self.
         """
         for key in dir(self):
             if key.isupper():
                 default_value = getattr(self, key)
-                self.meta[key] = _ConfigMeta(default_value=default_value)
+                self.meta[key] = ConfigMeta(
+                    default_value=default_value,
+                    field=Field(
+                        name=key,
+                        default_value=default_value,
+                        value_type=getattr(self, "__annotations__", {}).get(key),
+                    ),
+                )
                 setattr(self.__class__, key, _ConfigAttribute(key, default_value))
         return True
 
@@ -192,7 +155,7 @@ class BaseConfig(ConfigType):
         self.from_mapping(self.sync_function(), priority=priority)
         return True
 
-    async def access_config_from_coroutine_function(self, priority: int) -> bool:
+    async def access_config_from_coroutine(self, priority: int) -> bool:
         """Async updates the values in the config from the async_access_config_list.
         """
         self.from_mapping(await self.async_function(), priority=priority)
@@ -246,6 +209,28 @@ class BaseConfig(ConfigType):
 
     def __str__(self) -> str:
         return repr(self)
+
+    def json(
+        self,
+        skipkeys=False,
+        ensure_ascii=True,
+        check_circular=True,
+        allow_nan=True,
+        sort_keys=False,
+        indent=None,
+        separators=None,
+    ) -> str:
+        return json.dumps(
+            self.meta,
+            cls=ConfigMetaJSONEncoder,
+            skipkeys=skipkeys,
+            ensure_ascii=ensure_ascii,
+            check_circular=check_circular,
+            allow_nan=allow_nan,
+            indent=indent,
+            separators=separators,
+            sort_keys=sort_keys,
+        )
 
 
 class _ConfigAttribute:
