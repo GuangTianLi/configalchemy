@@ -5,7 +5,17 @@ import json
 import logging
 import os
 from threading import Lock
-from typing import Any, KeysView, List, Tuple, MutableMapping, Dict
+from typing import (
+    Any,
+    KeysView,
+    List,
+    Tuple,
+    MutableMapping,
+    Dict,
+    Optional,
+    TypeVar,
+    Type,
+)
 
 from configalchemy.field import Field
 from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
@@ -76,7 +86,8 @@ class BaseConfig(ConfigType):
                     priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
                 )
             )
-        super().__init__()
+        global _current_config
+        _current_config = self
 
     def _setup(self):
         """Setup the default values and field of value from self.
@@ -214,13 +225,13 @@ class BaseConfig(ConfigType):
 
     def json(
         self,
-        skipkeys=False,
-        ensure_ascii=True,
-        check_circular=True,
-        allow_nan=True,
-        sort_keys=False,
-        indent=None,
-        separators=None,
+        skipkeys: bool = False,
+        ensure_ascii: bool = True,
+        check_circular: bool = True,
+        allow_nan: bool = True,
+        sort_keys: bool = False,
+        indent: Optional[int] = None,
+        separators: Optional[Tuple[str, str]] = None,
     ) -> str:
         return json.dumps(
             self.meta,
@@ -250,3 +261,12 @@ class _ConfigAttribute:
 
     def __set__(self, instance: BaseConfig, value: Any) -> None:
         instance[self._name] = value
+
+
+_current_config = None
+_CurrentConfigType = TypeVar("_CurrentConfigType", bound=BaseConfig)
+
+
+def get_current_config(config: Type[_CurrentConfigType]) -> _CurrentConfigType:
+    """This API can and should only be used in lazy loading current config instance in the runtime"""
+    return _current_config or config()

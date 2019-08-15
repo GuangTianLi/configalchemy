@@ -47,4 +47,6 @@ class ConfigMeta:
 
 class ConfigMetaJSONEncoder(JSONEncoder):
     def default(self, o: ConfigMeta) -> Any:
-        return o.value
+        if isinstance(o, ConfigMeta):
+            return o.value
+        super().default(o)
