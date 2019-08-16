@@ -52,8 +52,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual("update", config.TEST)
         del config["TEST"]
         self.assertEqual("test", config.TEST)
-        with self.assertRaises(KeyError):
-            tmp = config["TEST"]
+        self.assertEqual("test", config["TEST"])
 
     def test_default_config_update_from_json(self):
         class DefaultConfig(BaseConfig):

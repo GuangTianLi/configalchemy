@@ -202,7 +202,7 @@ class BaseConfig(ConfigType):
         self._set_value(k, v, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)
 
     def __delitem__(self, key) -> None:
-        del self.meta[key]
+        del self.meta[key].value_list[-1]
 
     def update(self, __m, **kwargs):
         self.from_mapping(__m, kwargs, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)
@@ -267,6 +267,8 @@ _current_config = None
 _CurrentConfigType = TypeVar("_CurrentConfigType", bound=BaseConfig)
 
 
-def get_current_config(config: Type[_CurrentConfigType]) -> _CurrentConfigType:
+def get_current_config(config_type: Type[_CurrentConfigType]) -> _CurrentConfigType:
     """This API can and should only be used in lazy loading current config instance in the runtime"""
-    return _current_config or config()
+    if not isinstance(_current_config, config_type):
+        raise RuntimeError(f"There is no instance of type {config_type}")
+    return _current_config

@@ -1,9 +1,10 @@
+import json
 import unittest
-from typing import Optional
+from typing import Optional, Any
 from unittest.mock import patch, Mock
 
-from configalchemy.ext.generic_config import ListConfig, DictConfig
 from configalchemy.field import Field, ValidateException
+from configalchemy.types import Json, GenericConfigMixin
 
 
 class FieldTestCase(unittest.TestCase):
@@ -22,30 +23,38 @@ class FieldTestCase(unittest.TestCase):
         optional_field = Field(
             name="TEST", default_value=None, value_type=Optional[int]
         )
-        with patch.object(Field, "_typecast") as typecast:
-            self.assertEqual(1, optional_field.validate(1))
-            self.assertFalse(typecast.called)
+        self.assertEqual(1, optional_field.validate(1))
         self.assertEqual(1, optional_field.validate("1"))
 
-    def test_generic_field(self):
+    def test_json_type(self):
+        value_type = Json[list]
+        default_value: value_type = []
+        optional_field = Field(
+            name="TEST", default_value=default_value, value_type=value_type
+        )
+        with patch.object(value_type, "__typecast__") as mock:
+            self.assertEqual([1], optional_field.validate([1]))
+            self.assertFalse(mock.called)
+        self.assertEqual([1], optional_field.validate(json.dumps([1])))
+
+    def test_generic_field(unittest_self):
         value = ["1", "2"]
         typecast = Mock(return_value=value)
-        list_config = ListConfig(value, typecast=typecast)
-        generic_field = Field(name="TEST", default_value=list_config, value_type=None)
-        with patch.object(Field, "_typecast") as _typecast:
-            self.assertEqual(value, generic_field.validate(value))
-            self.assertFalse(_typecast.called)
-        self.assertEqual(value, generic_field.validate("typecast"))
-        typecast.assert_called_with("typecast")
 
-        value = {"1": 1}
-        typecast = Mock(return_value=value)
-        dict_config = DictConfig(value, typecast=typecast)
-        generic_field = Field(name="TEST", default_value=dict_config, value_type=None)
-        with patch.object(Field, "_typecast") as _typecast:
-            self.assertEqual(value, generic_field.validate(value))
-            self.assertFalse(_typecast.called)
-        self.assertEqual(value, generic_field.validate("typecast"))
+        class TestGenericConfigMixin(GenericConfigMixin):
+            def __type_check__(self, instance) -> bool:
+                return isinstance(instance, list)
+
+            def __typecast__(self, value: Any) -> Any:
+                return typecast(value)
+
+        generic_config = TestGenericConfigMixin()
+        generic_field = Field(
+            name="TEST", default_value=generic_config, value_type=None
+        )
+        unittest_self.assertEqual(value, generic_field.validate(value))
+        unittest_self.assertFalse(typecast.called)
+        unittest_self.assertEqual(value, generic_field.validate("typecast"))
         typecast.assert_called_with("typecast")
 
 
