@@ -1,5 +1,26 @@
+import functools
 import json
-from typing import Union, Type, cast, Any
+from typing import Union, Type, cast, Any, TypeVar
+
+_cleanups = []
+
+
+def _tp_cache(func):
+    """Internal wrapper caching __getitem__ of generic types with a fallback to
+    original function for non-hashable arguments.
+    """
+    cached = functools.lru_cache()(func)
+    _cleanups.append(cached.cache_clear)
+
+    @functools.wraps(func)
+    def inner(*args, **kwds):
+        try:
+            return cached(*args, **kwds)
+        except TypeError:
+            pass  # All real errors (not unhashable args) are raised below.
+        return func(*args, **kwds)
+
+    return inner
 
 
 class GenericConfigMixin:
@@ -11,15 +32,16 @@ class GenericConfigMixin:
 
 
 JsonSerializable = Union[int, float, bool, list, dict, str]
-JsonSerializableType = Type[JsonSerializable]
+ItemType = TypeVar("ItemType", bound=JsonSerializable)
 
 
 class JsonMeta(GenericConfigMixin):
-    def __init__(self, origin: JsonSerializableType = dict):
-        self.__origin__ = origin
+    def __init__(self, origin: Type[ItemType]):
+        self.__origin__ = getattr(origin, "__origin__", origin)
 
-    def __getitem__(self, t: JsonSerializableType) -> JsonSerializable:
-        return cast(JsonSerializable, JsonMeta(origin=t))
+    @_tp_cache
+    def __getitem__(self, t: Type[ItemType]) -> Type[ItemType]:
+        return cast(Type[ItemType], JsonMeta(origin=t))
 
     def __type_check__(self, instance: Any) -> bool:
         return isinstance(instance, self.__origin__)
@@ -28,4 +50,4 @@ class JsonMeta(GenericConfigMixin):
         return json.loads(value)
 
 
-Json = JsonMeta()
+Json = JsonMeta(origin=dict)

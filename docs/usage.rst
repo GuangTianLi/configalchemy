@@ -128,7 +128,7 @@ Auto Validation and Dynamic typecast
 ==============================================
 
 When new value is assigned to config, the value will be validated and typecast if possible and the process bases on
-default value or type annotations.
+`default value` or `type annotations`.
 
 .. code-block:: python
 
@@ -146,28 +146,26 @@ default value or type annotations.
     config.limit = 10
     print(config.limit) # 10
 
-Using Complex Config Type(List, Dict...)
+Json Type
 ----------------------------------------------------
 
-Define custom typecast function to support complex config type
-
-- typecast function default `json.loads`:
+You can use Json data type - `configalchemy` will use json.loads to typecast.
 
 .. code-block:: python
 
     import json
 
     from configalchemy import BaseConfig
-    from configalchemy.ext.generic_config import ListConfig, DictConfig
+    from configalchemy.types import Json
 
     class DefaultConfig(BaseConfig):
-        TEST_LIST = ListConfig(["str"])
-        TEST_DICT = DictConfig({"name": "default"})
+        TEST_LIST: Json[list] = ["str"]
+        TEST_DICT: Json[dict] = {"name": "default"}
 
     config = DefaultConfig()
-    config.TEST_LIST = json.dumps(["test"]))
+    config.TEST_LIST = json.dumps(["test"])
     config.TEST_LIST
     >>> ["test"]
-    config.TEST_DICT = json.dumps({"name": "test"}))
+    config.TEST_DICT = json.dumps({"name": "test"})
     config.TEST_DICT
     >>> {"name": "test"}
