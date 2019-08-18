@@ -4,7 +4,6 @@ import errno
 import json
 import logging
 import os
-from threading import Lock
 from typing import (
     Any,
     KeysView,
@@ -59,7 +58,6 @@ class BaseConfig(ConfigType):
     CONFIGALCHEMY_SETITEM_PRIORITY = 99
 
     def __init__(self):
-        self.lock = Lock()
         self.meta: Dict[str, ConfigMeta] = {}
 
         self._setup()
@@ -164,24 +162,23 @@ class BaseConfig(ConfigType):
         return True
 
     def _set_value(self, key: str, value: Any, priority: int):
-        with self.lock:
-            if key not in self.meta:
-                self.meta[key] = ConfigMeta(
+        if key not in self.meta:
+            """Setup"""
+            self.meta[key] = ConfigMeta(
+                default_value=value,
+                field=Field(
+                    name=key,
                     default_value=value,
-                    field=Field(
-                        name=key,
-                        default_value=value,
-                        value_type=getattr(self, "__annotations__", {}).get(key),
-                    ),
-                )
-                setattr(self.__class__, key, _ConfigAttribute(key, value))
-            else:
-                self.meta[key].set(priority=priority, value=value)
+                    value_type=getattr(self, "__annotations__", {}).get(key),
+                ),
+            )
+            setattr(self.__class__, key, _ConfigAttribute(key, value))
+        else:
+            self.meta[key].set(priority=priority, value=value)
 
     def __getitem__(self, key: str) -> Any:
         """ x.__getitem__(y) <==> x[y] """
-        with self.lock:
-            return self.meta[key].value
+        return self.meta[key].value
 
     def items(self) -> List[Tuple[str, Any]]:  # type: ignore
         return [(key, config_meta.value) for key, config_meta in self.meta.items()]
@@ -202,17 +199,20 @@ class BaseConfig(ConfigType):
         self._set_value(k, v, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)
 
     def __delitem__(self, key) -> None:
-        del self.meta[key].value_list[-1]
+        if len(self.meta[key].items[-1].values) == 1:
+            if len(self.meta[key].items) != 1:
+                del self.meta[key].items[-1]
+        else:
+            del self.meta[key].items[-1].values[-1]
 
     def update(self, __m, **kwargs):
         self.from_mapping(__m, kwargs, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)
 
     def get(self, key: str, default=None):
-        with self.lock:
-            if key in self.meta:
-                return self.meta[key].value
-            else:
-                return default
+        if key in self.meta:
+            return self.meta[key].value
+        else:
+            return default
 
     def __bool__(self) -> bool:
         return bool(self.meta)

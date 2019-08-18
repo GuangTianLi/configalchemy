@@ -7,36 +7,47 @@ ConfigType = MutableMapping[str, Any]
 
 
 class ConfigMetaItem:
+    __slots__ = ("priority", "values")
+
     def __init__(self, priority: int, value: Any):
         self.priority = priority
-        self.value = value
+        self.values = [value]
 
     def __repr__(self) -> str:
-        return f"ConfigMetaItem(priority={self.priority}, value={self.value})"
+        return f"ConfigMetaItem(priority={self.priority}, value={self.values})"
 
     def __str__(self) -> str:
         return repr(self)
 
 
 class ConfigMeta:
+    __slots__ = ("field", "items")
+
     def __init__(self, default_value: Any, field: Field):
         self.field = field
-        self.value_list: List[ConfigMetaItem] = [ConfigMetaItem(0, default_value)]
+        self.items: List[ConfigMetaItem] = [ConfigMetaItem(0, default_value)]
 
     @property
     def value(self) -> Any:
-        return self.value_list[-1].value
+        return self.items[-1].values[-1]
 
     def set(self, priority: int, value: Any) -> None:
         value = self.field.validate(value)
-        item = ConfigMetaItem(priority, value)
-        length = len(self.value_list)
+        length = len(self.items)
         for index in range(length - 1, 0, -1):
-            if self.value_list[index - 1].priority <= priority:
-                self.value_list.insert(index, item)
+            if self.items[index - 1].priority < priority:
+                item = ConfigMetaItem(priority, value)
+                self.items.insert(index, item)
+                break
+            elif self.items[index - 1].priority == priority:
+                self.items[index - 1].values.append(value)
                 break
         else:
-            self.value_list.insert(1, item)
+            if priority == 0:
+                self.items[0].values.append(value)
+            else:
+                item = ConfigMetaItem(priority, value)
+                self.items.insert(1, item)
 
     def __repr__(self) -> str:
         return repr(self.value)
@@ -44,9 +55,16 @@ class ConfigMeta:
     def __str__(self) -> str:
         return str(self.value)
 
+    def __enter__(self):
+        """Prepare to implement optimistic raw lock if necessary"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
 
 class ConfigMetaJSONEncoder(JSONEncoder):
-    def default(self, o: ConfigMeta) -> Any:
+    def default(self, o) -> Any:
         if isinstance(o, ConfigMeta):
             return o.value
         super().default(o)
