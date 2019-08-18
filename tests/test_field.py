@@ -48,10 +48,12 @@ class FieldTestCase(unittest.TestCase):
         typecast = Mock(return_value=value)
 
         class TestGenericConfigMixin(GenericConfigMixin):
-            def __type_check__(self, instance) -> bool:
+            @classmethod
+            def __type_check__(cls, instance) -> bool:
                 return isinstance(instance, list)
 
-            def __typecast__(self, value: Any) -> Any:
+            @classmethod
+            def __typecast__(cls, value: Any) -> Any:
                 return typecast(value)
 
         generic_config = TestGenericConfigMixin()

@@ -1,7 +1,5 @@
 from typing import Type, Any, Union, Optional, Callable
 
-from configalchemy.types import JsonMeta
-
 AnyType = Optional[Type[Any]]
 
 
@@ -38,12 +36,12 @@ class Field:
         if getattr(self.default_value, "__typecast__", None):
             self.typecast = self.default_value.__typecast__
 
-    def prepare(self) -> None:
-        if isinstance(self.value_type, JsonMeta):
-            self.typecast = self.value_type.__typecast__
+        if getattr(self.value_type, "__type_check__", None):
             self.type_check = self.value_type.__type_check__
-            return
+        if getattr(self.value_type, "__typecast__", None):
+            self.typecast = self.value_type.__typecast__
 
+    def prepare(self) -> None:
         origin = getattr(self.value_type, "__origin__", None)
         if origin is None:
             # field is not "typing" object eg. Union etc.

@@ -24,18 +24,20 @@ def _tp_cache(func):
 
 
 class GenericConfigMixin:
-    def __type_check__(self, instance: Any) -> bool:
-        return isinstance(instance, self.__class__)
+    @classmethod
+    def __type_check__(cls, instance: Any) -> bool:
+        return isinstance(instance, cls)
 
-    def __typecast__(self, value: Any) -> Any:
-        raise TypeError(f"Object of type {self.__class__.__name__} can not be typecast")
+    @classmethod
+    def __typecast__(cls, value: Any) -> Any:
+        raise TypeError(f"Object of type {cls.__name__} can not be typecast")
 
 
 JsonSerializable = Union[int, float, bool, list, dict, str]
 ItemType = TypeVar("ItemType", bound=JsonSerializable)
 
 
-class JsonMeta(GenericConfigMixin):
+class JsonMeta:
     def __init__(self, origin: Type[ItemType]):
         self.__origin__ = getattr(origin, "__origin__", origin)
 
