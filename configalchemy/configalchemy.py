@@ -15,6 +15,7 @@ from typing import (
     TypeVar,
     Type,
 )
+from weakref import ref, ReferenceType
 
 from configalchemy.field import Field
 from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
@@ -84,8 +85,8 @@ class BaseConfig(ConfigType):
                     priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
                 )
             )
-        global _current_config
-        _current_config = self
+        global _current_config_ref
+        _current_config_ref = ref(self)
 
     def _setup(self):
         """Setup the default values and field of value from self.
@@ -169,7 +170,7 @@ class BaseConfig(ConfigType):
                 field=Field(
                     name=key,
                     default_value=value,
-                    value_type=getattr(self, "__annotations__", {}).get(key),
+                    annotation=getattr(self, "__annotations__", {}).get(key),
                 ),
             )
             setattr(self.__class__, key, _ConfigAttribute(key, value))
@@ -263,12 +264,13 @@ class _ConfigAttribute:
         instance[self._name] = value
 
 
-_current_config = None
+_current_config_ref = ref(object)
 _CurrentConfigType = TypeVar("_CurrentConfigType", bound=BaseConfig)
 
 
 def get_current_config(config_type: Type[_CurrentConfigType]) -> _CurrentConfigType:
-    """This API can and should only be used in lazy loading current config instance in the runtime"""
-    if not isinstance(_current_config, config_type):
+    # """This API can and should only be used in lazy loading current config instance in the runtime"""
+    current_config = _current_config_ref()
+    if not isinstance(current_config, config_type):
         raise RuntimeError(f"There is no instance of type {config_type}")
-    return _current_config
+    return current_config

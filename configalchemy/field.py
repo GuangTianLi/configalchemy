@@ -1,6 +1,4 @@
-from typing import Type, Any, Union, Optional, Callable
-
-AnyType = Optional[Type[Any]]
+from typing import Any, Union, Callable
 
 
 class ValidateException(Exception):
@@ -20,12 +18,20 @@ type {type(self.value)}
 
 
 class Field:
-    __slots__ = ("name", "value_type", "default_value", "type_check", "typecast")
+    __slots__ = (
+        "name",
+        "annotation",
+        "value_type",
+        "default_value",
+        "type_check",
+        "typecast",
+    )
 
-    def __init__(self, *, name: str, value_type: AnyType, default_value: Any):
+    def __init__(self, *, name: str, annotation: Any, default_value: Any):
         self.name = name
-        self.value_type = value_type or type(default_value)
+        self.annotation = annotation
         self.default_value = default_value
+        self.value_type = type(default_value)
         self.type_check: Callable[[Any], bool] = self._type_check
         self.typecast: Callable[[Any], Any] = self._typecast
 
@@ -36,18 +42,18 @@ class Field:
         if getattr(self.default_value, "__typecast__", None):
             self.typecast = self.default_value.__typecast__
 
-        if getattr(self.value_type, "__type_check__", None):
-            self.type_check = self.value_type.__type_check__
-        if getattr(self.value_type, "__typecast__", None):
-            self.typecast = self.value_type.__typecast__
+        if getattr(self.annotation, "__type_check__", None):
+            self.type_check = self.annotation.__type_check__
+        if getattr(self.annotation, "__typecast__", None):
+            self.typecast = self.annotation.__typecast__
 
     def prepare(self) -> None:
-        origin = getattr(self.value_type, "__origin__", None)
+        origin = getattr(self.annotation, "__origin__", None)
         if origin is None:
             # field is not "typing" object eg. Union etc.
             return
         if origin is Union:
-            self.value_type = self.value_type.__args__
+            self.value_type = self.annotation.__args__
             self.typecast = lambda x: self.value_type[0](x)
             return
 

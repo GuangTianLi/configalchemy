@@ -145,3 +145,19 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual(4, config["FOURTH"])
         config.access_config_from_function(config.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY)
         self.assertEqual(4, config["FOURTH"])
+
+    def test_multiple_inheritance(self):
+        class AConfig(BaseConfig):
+            A_TEST = "TEST"
+
+        class BConfig(BaseConfig):
+            B_TEST = "TEST"
+
+        class CConfig(AConfig, BConfig):
+            CONFIGALCHEMY_ENABLE_FUNCTION = True
+
+            def sync_function(self) -> ConfigType:
+                return {"A_TEST": "A_TEST", "B_TEST": "B_TEST"}
+
+        self.assertEqual("A_TEST", CConfig().A_TEST)
+        self.assertEqual("B_TEST", CConfig().B_TEST)

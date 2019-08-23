@@ -11,7 +11,11 @@ class GlobalAPITestCase(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             get_current_config(DefaultConfig)
 
-        DefaultConfig().TEST = "inited"
+        with self.assertRaises(RuntimeError):
+            DefaultConfig()
+            get_current_config(DefaultConfig)
+        config = DefaultConfig()
+        config.TEST = "inited"
         current_config = get_current_config(DefaultConfig)
         self.assertEqual("inited", current_config.TEST)
 

@@ -5,6 +5,7 @@ History
 0.2.* (2019-08)
 ------------------
 
+* Change global variable to weak reference
 * Remove Lock (Prepare to implement optimistic raw lock if necessary)
 * Improve Priority Data Structure
 * Improve Field Validation
