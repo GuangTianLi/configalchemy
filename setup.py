@@ -38,7 +38,7 @@ setup(
     tests_require=test_requirements,
     url="https://github.com/GuangTianLi/configalchemy",
     python_requires=">=3.6.0",
-    version="0.2.3",
+    version="0.2.4",
     zip_safe=False,
     extras_require={"apollo": ["requests"]},
 )
