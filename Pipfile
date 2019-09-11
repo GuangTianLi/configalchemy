@@ -3,11 +3,6 @@ name = "pypi"
 url = "https://mirrors.aliyun.com/pypi/simple/"
 verify_ssl = true
 
-[[source]]
-url = "https://gllue:gllue321@pypi.gllue.net"
-verify_ssl = false
-name = "gllue"
-
 [dev-packages]
 ipython = "*"
 ipdb = "*"
