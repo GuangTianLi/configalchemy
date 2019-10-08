@@ -1,7 +1,7 @@
 import json
 import unittest
 from typing import Optional, Any, List
-from unittest.mock import patch, Mock
+from unittest.mock import Mock
 
 from configalchemy.field import Field, ValidateException
 from configalchemy.types import Json, GenericConfigMixin
@@ -32,9 +32,7 @@ class FieldTestCase(unittest.TestCase):
         json_field = Field(
             name="TEST", default_value=default_value, annotation=value_type
         )
-        with patch.object(value_type, "__typecast__") as mock:
-            self.assertEqual([1], json_field.validate([1]))
-            self.assertFalse(mock.called)
+        self.assertEqual([1], json_field.validate([1]))
         self.assertEqual([1], json_field.validate(json.dumps([1])))
 
         default_value: Json[List[int]] = [1, 2]
@@ -44,6 +42,15 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual([1], json_field.validate(json.dumps([1])))
 
     def test_generic_field(unittest_self):
+        class MyType(GenericConfigMixin):
+            ...
+
+        my_type = MyType()
+        generic_field = Field(name="TEST", default_value=my_type, annotation=None)
+        unittest_self.assertEqual(my_type, generic_field.validate(my_type))
+        with unittest_self.assertRaises(ValidateException):
+            generic_field.validate("typecast")
+
         value = ["1", "2"]
         typecast = Mock(return_value=value)
 

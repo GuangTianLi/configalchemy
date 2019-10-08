@@ -99,7 +99,7 @@ class ApolloBaseConfig(BaseConfig):
                 self.APOLLO_NOTIFICATION_MAP[entry["namespaceName"]]["id"] = entry[
                     "notificationId"
                 ]
-        else:
+        else:  # pragma: no cover
             logging.info("Sleep...")
 
     def long_poll(self):
@@ -119,5 +119,5 @@ class ApolloBaseConfig(BaseConfig):
                     start_time = time_counter()
             except ConfigException:
                 time.sleep(5)
-            except Exception:
+            except Exception:  # pragma: no cover
                 logging.exception("long poll error")

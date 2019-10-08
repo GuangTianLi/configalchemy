@@ -15,7 +15,7 @@ from typing import (
     TypeVar,
     Type,
 )
-from weakref import ref, ReferenceType
+from weakref import ref
 
 from configalchemy.field import Field
 from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
@@ -233,10 +233,11 @@ class BaseConfig(ConfigType):
         sort_keys: bool = False,
         indent: Optional[int] = None,
         separators: Optional[Tuple[str, str]] = None,
+        cls: Type[ConfigMetaJSONEncoder] = ConfigMetaJSONEncoder,
     ) -> str:
         return json.dumps(
             self.meta,
-            cls=ConfigMetaJSONEncoder,
+            cls=cls,
             skipkeys=skipkeys,
             ensure_ascii=ensure_ascii,
             check_circular=check_circular,
@@ -254,7 +255,7 @@ class _ConfigAttribute:
 
     def __get__(self, obj: BaseConfig, type=None) -> Any:
         if obj is None:
-            return self
+            return self._default_value
         if self._name not in obj:
             return self._default_value
         else:

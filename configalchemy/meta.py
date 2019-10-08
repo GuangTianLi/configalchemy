@@ -34,7 +34,7 @@ class ConfigMeta:
     def set(self, priority: int, value: Any) -> None:
         value = self.field.validate(value)
         length = len(self.items)
-        for index in range(length - 1, 0, -1):
+        for index in range(length, 0, -1):
             if self.items[index - 1].priority < priority:
                 item = ConfigMetaItem(priority, value)
                 self.items.insert(index, item)
@@ -42,12 +42,6 @@ class ConfigMeta:
             elif self.items[index - 1].priority == priority:
                 self.items[index - 1].values.append(value)
                 break
-        else:
-            if priority == 0:
-                self.items[0].values.append(value)
-            else:
-                item = ConfigMetaItem(priority, value)
-                self.items.insert(1, item)
 
     def __repr__(self) -> str:
         return repr(self.value)

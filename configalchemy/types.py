@@ -2,18 +2,15 @@ import functools
 import json
 from typing import Union, Type, cast, Any, TypeVar
 
-_cleanups = []
-
 
 def _tp_cache(func):
     """Internal wrapper caching __getitem__ of generic types with a fallback to
     original function for non-hashable arguments.
     """
     cached = functools.lru_cache()(func)
-    _cleanups.append(cached.cache_clear)
 
     @functools.wraps(func)
-    def inner(*args, **kwds):
+    def inner(*args, **kwds):  # pragma: no cover
         try:
             return cached(*args, **kwds)
         except TypeError:
@@ -38,6 +35,8 @@ ItemType = TypeVar("ItemType", bound=JsonSerializable)
 
 
 class JsonMeta:
+    __slots__ = ("__origin__",)
+
     def __init__(self, origin: Type[ItemType]):
         self.__origin__ = getattr(origin, "__origin__", origin)
 
@@ -53,3 +52,11 @@ class JsonMeta:
 
 
 Json = JsonMeta(origin=dict)
+
+
+class SecretStr(str):
+    def __repr__(self) -> str:
+        return "SecretStr('**********')"
+
+    def __str__(self) -> str:
+        return repr(self)

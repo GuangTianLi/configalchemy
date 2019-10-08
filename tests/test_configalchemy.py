@@ -37,10 +37,10 @@ class ConfigalchemyTestCase(unittest.TestCase):
         with self.assertRaises(KeyError):
             _ = config["NOT_EXIST"]
 
-        def test_double_star(**kw):
+        def test_unpack(**kw):
             self.assertEqual(config, kw)
 
-        test_double_star(**config)
+        test_unpack(**config)
         self.assertEqual("NOT_EXIST", config.get("NOT_EXIST", "NOT_EXIST"))
 
         self.assertTrue(config)
@@ -48,11 +48,16 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual(len(config), len(list(iter(config))))
 
         config.update(dict(TEST="update"))
-        self.assertEqual("update", config["TEST"])
-        self.assertEqual("update", config.TEST)
+        config.update(dict(TEST="updated"))
+        self.assertEqual("updated", config["TEST"])
+        self.assertEqual("updated", config.TEST)
+        del config["TEST"]
         del config["TEST"]
         self.assertEqual("test", config.TEST)
+        self.assertEqual("test", DefaultConfig.TEST)
         self.assertEqual("test", config["TEST"])
+        self.assertEqual("test", json.loads(config.json())["TEST"])
+        self.assertEqual(str(config), str(json.loads(config.json())))
 
     def test_default_config_update_from_json(self):
         class DefaultConfig(BaseConfig):
