@@ -29,7 +29,7 @@ class ApolloBaseConfig(BaseConfig):
 
     def __init__(self):
         super().__init__()
-        if self.get("ENABLE_LONG_POLL", False):
+        if self.ENABLE_LONG_POLL:
             self.start_long_poll()
 
     def get_from_namespace(
@@ -41,6 +41,8 @@ class ApolloBaseConfig(BaseConfig):
         return self.APOLLO_NOTIFICATION_MAP[namespace]["data"].get(key, default)
 
     def start_long_poll(self):
+        if not self.ENABLE_LONG_POLL:
+            return
         logging.info("start long poll")
         thread = threading.Thread(target=self.long_poll)
         thread.daemon = True

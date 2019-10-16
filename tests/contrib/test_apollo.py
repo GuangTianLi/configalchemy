@@ -84,6 +84,7 @@ class ApolloConfigTestCase(unittest.TestCase):
     def test_start_long_poll(self):
         class DefaultConfig(ApolloBaseConfig):
             CONFIGALCHEMY_ENABLE_FUNCTION = False
+            ENABLE_LONG_POLL = True
 
         config = DefaultConfig()
         with patch("threading.Thread") as MockThread:
