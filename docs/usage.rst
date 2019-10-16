@@ -169,3 +169,23 @@ You can use Json data type - `configalchemy` will use json.loads to typecast.
     config.TEST_DICT = json.dumps({"name": "test"})
     config.TEST_DICT
     >>> {"name": "test"}
+
+
+Access config from Apollo
+==============================================
+
+`Apollo - A reliable configuration management system <https://github.com/ctripcorp/apollo>`_
+
+You can inherit from :any:`ApolloBaseConfig` to access config from Apollo.
+
+.. code-block:: python
+
+    from configalchemy.contrib.apollo import ApolloBaseConfig
+    class DefaultConfig(ApolloBaseConfig):
+
+        #: apollo
+        ENABLE_LONG_POLL = True
+        APOLLO_SERVER_URL = ""
+        APOLLO_APP_ID = ""
+        APOLLO_CLUSTER = "default"
+        APOLLO_NAMESPACE = "application"

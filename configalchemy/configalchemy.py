@@ -23,10 +23,30 @@ from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
 ConfigType = MutableMapping[str, Any]
 
 
-class BaseConfig(ConfigType):
-    """Initialize the :any:`Config` with the Priority::
+class Foo:
+    """Docstring for class Foo."""
 
-        ** config from env > config from local file > config from function > default config **
+    #: Doc comment for class attribute Foo.bar.
+    #: It can have multiple lines.
+    bar = 1
+
+    flox = 1.5  #: Doc comment for Foo.flox. One line only.
+
+    baz = 2
+    """Docstring for class attribute Foo.baz."""
+
+    def __init__(self):
+        #: Doc comment for instance attribute qux.
+        self.qux = 3
+
+        self.spam = 4
+        """Docstring for instance attribute spam."""
+
+
+class BaseConfig(ConfigType):
+    """Initialize the :any:`BaseConfig` with the Priority::
+
+        config from env > config from local file > config from function > default config
 
     Example of class-based configuration::
 
@@ -36,26 +56,26 @@ class BaseConfig(ConfigType):
         config = DefaultConfig()
     """
 
-    # The prefix to construct the full environment variable key to access overrode config.
+    #: The prefix to construct the full environment variable key to access overrode config.
     CONFIGALCHEMY_ENV_PREFIX = ""
     CONFIGALCHEMY_ENVIRONMENT_VALUE_PRIORITY = 20
 
-    # The the filename of the JSON file. This can either be
-    # an absolute filename or a filename relative to the
-    # `CONFIGALCHEMY_ROOT_PATH`.
+    #: The the filename of the JSON file. This can either be
+    #: an absolute filename or a filename relative to the
+    #: `CONFIGALCHEMY_ROOT_PATH`.
     CONFIGALCHEMY_ROOT_PATH = ""
     CONFIGALCHEMY_CONFIG_FILE = ""
     CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY = 10
-    # set to ``True`` if you want silent failure for missing files.
+    #: set to ``True`` if you want silent failure for missing files.
     CONFIGALCHEMY_LOAD_FILE_SILENT = False
 
-    # set to ``True`` if you want to override config from function return value.
+    #: set to ``True`` if you want to override config from function return value.
     CONFIGALCHEMY_ENABLE_FUNCTION = False
     CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = 0
 
-    # The priority of config['TEST'] = value,
-    # config.TEST = value and
-    # config.update(TEST=value)
+    #: The priority of config['TEST'] = value,
+    #: config.TEST = value and
+    #: config.update(TEST=value)
     CONFIGALCHEMY_SETITEM_PRIORITY = 99
 
     def __init__(self):

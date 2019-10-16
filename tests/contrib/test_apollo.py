@@ -1,3 +1,4 @@
+import threading
 import time
 import unittest
 from unittest.mock import Mock, patch
@@ -55,6 +56,7 @@ class ApolloConfigTestCase(unittest.TestCase):
             APOLLO_NAMESPACE = "application"
 
         count = 0
+        DefaultConfig.APOLLO_NOTIFICATION_MAP = {}
 
         def time_counter_side_effect():
             nonlocal count
@@ -69,7 +71,6 @@ class ApolloConfigTestCase(unittest.TestCase):
 
         config = DefaultConfig()
         requests_get.side_effect = mock_get
-
         self.assertEqual("changed", config.get_from_namespace("TEST", namespace="tmp"))
         return_value["namespaceName"] = "application"
         time_counter.side_effect = time_counter_side_effect
@@ -81,15 +82,15 @@ class ApolloConfigTestCase(unittest.TestCase):
         self.assertEqual("changed", config["TEST"])
         self.assertIn("application", config.APOLLO_NOTIFICATION_MAP)
 
-    def test_start_long_poll(self):
+    @patch.object(threading, "Thread")
+    def test_start_long_poll(self, thread_mock):
         class DefaultConfig(ApolloBaseConfig):
             CONFIGALCHEMY_ENABLE_FUNCTION = False
             ENABLE_LONG_POLL = True
 
         config = DefaultConfig()
-        with patch("threading.Thread") as MockThread:
-            config.start_long_poll()
-            MockThread.assert_called_with(target=config.long_poll)
+        config.start_long_poll()
+        thread_mock.assert_called_with(target=config.long_poll)
 
 
 if __name__ == "__main__":

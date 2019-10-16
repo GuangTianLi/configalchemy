@@ -17,13 +17,13 @@ class ConfigException(Exception):
 class ApolloBaseConfig(BaseConfig):
     CONFIGALCHEMY_ENABLE_FUNCTION = True
 
-    #: apollo
     APOLLO_USING_CACHE = False
     APOLLO_SERVER_URL = ""
     APOLLO_APP_ID = ""
     APOLLO_CLUSTER = "default"
     APOLLO_NAMESPACE = "application"
     APOLLO_LONG_POLL_TIMEOUT = 80
+    #: set to ``True`` if you want to start thread to update your config in runtime.
     ENABLE_LONG_POLL = False
     APOLLO_NOTIFICATION_MAP: ConfigType = {}
 
@@ -37,8 +37,11 @@ class ApolloBaseConfig(BaseConfig):
     ):
         if namespace not in self.APOLLO_NOTIFICATION_MAP:
             self.APOLLO_NAMESPACE = namespace
-            self.sync_function()
-        return self.APOLLO_NOTIFICATION_MAP[namespace]["data"].get(key, default)
+            self.from_mapping(
+                self.sync_function(),
+                priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY,
+            )
+        return getattr(self, key, default)
 
     def start_long_poll(self):
         if not self.ENABLE_LONG_POLL:
