@@ -70,7 +70,7 @@ class ApolloBaseConfig(BaseConfig):
             logging.debug(f"Got from apollo: {data}")
             return data.get("configurations", {})
         else:
-            raise ConfigException("loading config failed")
+            raise ConfigException(f"loading config failed: {url}")
 
     def long_poll_from_apollo(self):
         url = f"{self.APOLLO_SERVER_URL}/notifications/v2/"
@@ -124,5 +124,3 @@ class ApolloBaseConfig(BaseConfig):
                     start_time = time_counter()
             except ConfigException:
                 time.sleep(5)
-            except Exception:  # pragma: no cover
-                logging.exception("long poll error")
