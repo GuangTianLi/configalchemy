@@ -58,20 +58,20 @@ class BaseConfig(ConfigType):
 
     #: The prefix to construct the full environment variable key to access overrode config.
     CONFIGALCHEMY_ENV_PREFIX = ""
-    CONFIGALCHEMY_ENVIRONMENT_VALUE_PRIORITY = 20
+    CONFIGALCHEMY_ENVIRONMENT_VALUE_PRIORITY = 30
 
     #: The the filename of the JSON file. This can either be
     #: an absolute filename or a filename relative to the
     #: `CONFIGALCHEMY_ROOT_PATH`.
     CONFIGALCHEMY_ROOT_PATH = ""
     CONFIGALCHEMY_CONFIG_FILE = ""
-    CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY = 10
+    CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY = 20
     #: set to ``True`` if you want silent failure for missing files.
     CONFIGALCHEMY_LOAD_FILE_SILENT = False
 
     #: set to ``True`` if you want to override config from function return value.
     CONFIGALCHEMY_ENABLE_FUNCTION = False
-    CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = 0
+    CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = 10
 
     #: The priority of config['TEST'] = value,
     #: config.TEST = value and
