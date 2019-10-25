@@ -70,11 +70,12 @@ class ApolloBaseConfig(BaseConfig):
             self._access_config_by_namespace(self.APOLLO_NAMESPACE),
             priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY,
         )
-        for namespace in self.APOLLO_EXTRA_NAMESPACE.split(","):
-            self.from_mapping(
-                self._access_config_by_namespace(namespace),
-                priority=self.APOLLO_EXTRA_NAMESPACE_PRIORITY,
-            )
+        if self.APOLLO_EXTRA_NAMESPACE:
+            for namespace in self.APOLLO_EXTRA_NAMESPACE.split(","):
+                self.from_mapping(
+                    self._access_config_by_namespace(namespace),
+                    priority=self.APOLLO_EXTRA_NAMESPACE_PRIORITY,
+                )
         return {}
 
     def long_poll_from_apollo(self):
