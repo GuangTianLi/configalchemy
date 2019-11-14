@@ -24,7 +24,6 @@ class ApolloConfigTestCase(unittest.TestCase):
 
         class DefaultConfig(ApolloBaseConfig):
             TEST = "base"
-            ENABLE_LONG_POLL = True
             #: apollo
             APOLLO_SERVER_URL = ""
             APOLLO_APP_ID = ""
@@ -116,7 +115,6 @@ class ApolloConfigTestCase(unittest.TestCase):
     def test_start_long_poll(self, thread_mock):
         class DefaultConfig(ApolloBaseConfig):
             CONFIGALCHEMY_ENABLE_FUNCTION = False
-            ENABLE_LONG_POLL = True
 
         config = DefaultConfig()
         config.start_long_poll()

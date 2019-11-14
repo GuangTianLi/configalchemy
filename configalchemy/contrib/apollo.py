@@ -29,16 +29,12 @@ class ApolloBaseConfig(BaseConfig):
     APOLLO_EXTRA_NAMESPACE_PRIORITY = 9
 
     APOLLO_LONG_POLL_TIMEOUT = 80
-    #: set to ``True`` if you want to start thread to update your config in runtime.
-    ENABLE_LONG_POLL = False
 
     def __init__(self):
         self.apollo_notification_map: Dict[str, ConfigType] = {}
         super().__init__()
 
     def start_long_poll(self):
-        if not self.ENABLE_LONG_POLL:
-            return
         logging.info("start long poll")
         thread = threading.Thread(target=self.long_poll)
         thread.daemon = True
