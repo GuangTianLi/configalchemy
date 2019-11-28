@@ -1,15 +1,15 @@
 import json
 import unittest
-from typing import Optional, Any, List
+from typing import Optional, List, Any
 from unittest.mock import Mock
 
 from configalchemy.field import Field, ValidateException
-from configalchemy.types import Json, GenericConfigMixin
+from configalchemy.types import Json
 
 
 class FieldTestCase(unittest.TestCase):
     def test_validate(self):
-        int_field = Field(name="TEST", default_value=0, annotation=int)
+        int_field = Field(name="TEST", default_value=0, annotation=None)
         for value in [b"0", "0"]:
             self.assertEqual(0, int_field.validate(value))
         with self.assertRaises(ValidateException) as e:
@@ -18,6 +18,15 @@ class FieldTestCase(unittest.TestCase):
         self.assertIn(str(type(".0")), str(e.exception))
         self.assertEqual("TEST", e.exception.name)
         self.assertEqual(".0", e.exception.value)
+
+    def test_bool_validate(self):
+        bool_field = Field(name="TEST", default_value=False, annotation=None)
+        for value in ["true", "1", "yes", "y", 1]:
+            self.assertTrue(bool_field.validate(value))
+        for value in ["0", "false", "False", "No", 0]:
+            self.assertFalse(bool_field.validate(value))
+        self.assertTrue(bool_field.validate(True))
+        self.assertFalse(bool_field.validate(False))
 
     def test_union_type(self):
         optional_field = Field(
@@ -42,7 +51,7 @@ class FieldTestCase(unittest.TestCase):
         self.assertEqual([1], json_field.validate(json.dumps([1])))
 
     def test_generic_field(unittest_self):
-        class MyType(GenericConfigMixin):
+        class MyType:
             ...
 
         my_type = MyType()
@@ -54,13 +63,13 @@ class FieldTestCase(unittest.TestCase):
         value = ["1", "2"]
         typecast = Mock(return_value=value)
 
-        class TestGenericConfigMixin(GenericConfigMixin):
+        class TestGenericConfigMixin:
             @classmethod
             def __type_check__(cls, instance) -> bool:
                 return isinstance(instance, list)
 
             @classmethod
-            def __typecast__(cls, value: Any) -> Any:
+            def __typecast__(cls, value: Any) -> list:
                 return typecast(value)
 
         generic_config = TestGenericConfigMixin()

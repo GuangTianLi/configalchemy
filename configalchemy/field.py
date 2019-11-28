@@ -1,5 +1,7 @@
 from typing import Any, Union, Callable
 
+from configalchemy.types import DEFAULT_TYPE_CAST
+
 
 class ValidateException(Exception):
     def __init__(self, name: str, value: Any):
@@ -36,6 +38,10 @@ class Field:
         self.typecast: Callable[[Any], Any] = self._typecast
 
         self.prepare()
+
+        if self.value_type in DEFAULT_TYPE_CAST:
+            self.type_check = DEFAULT_TYPE_CAST[self.value_type].__type_check__
+            self.typecast = DEFAULT_TYPE_CAST[self.value_type].__typecast__
 
         if getattr(self.default_value, "__type_check__", None):
             self.type_check = self.default_value.__type_check__

@@ -1,6 +1,6 @@
 import functools
 import json
-from typing import Union, Type, cast, Any, TypeVar
+from typing import Union, Type, cast, Any, TypeVar, Generic, TYPE_CHECKING, Tuple, Dict
 
 
 def _tp_cache(func):
@@ -18,16 +18,6 @@ def _tp_cache(func):
         return func(*args, **kwds)
 
     return inner
-
-
-class GenericConfigMixin:
-    @classmethod
-    def __type_check__(cls, instance: Any) -> bool:
-        return isinstance(instance, cls)
-
-    @classmethod
-    def __typecast__(cls, value: Any) -> Any:
-        raise TypeError(f"Object of type {cls.__name__} can not be typecast")
 
 
 JsonSerializable = Union[int, float, bool, list, dict, str]
@@ -60,3 +50,35 @@ class SecretStr(str):
 
     def __str__(self) -> str:
         return repr(self)
+
+
+T = TypeVar("T")
+
+
+class DefaultTypeCast(Generic[T]):
+    if TYPE_CHECKING:  # pragma: no cover
+        # populated by the Generic, defined here to help IDEs only
+        __orig_bases__: Tuple[Any, ...]
+
+    @classmethod
+    def __type_check__(cls, instance: Any) -> bool:
+        return isinstance(instance, cls.__orig_bases__[0].__args__[0])
+
+    @classmethod
+    def __typecast__(cls, value: Any) -> T:
+        raise TypeError(f"Object of type {cls.__name__} can not be typecast")
+
+
+BOOL_STRINGS = {"true", "1", "yes", "y"}
+
+
+class Boolean(DefaultTypeCast[bool]):
+    @classmethod
+    def __typecast__(self, value: Any) -> bool:
+        if isinstance(value, str):
+            return value.lower() in BOOL_STRINGS
+        else:
+            return bool(value)
+
+
+DEFAULT_TYPE_CAST: Dict[Type, Type[DefaultTypeCast]] = {bool: Boolean}
