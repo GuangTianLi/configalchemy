@@ -52,6 +52,8 @@ class BaseConfig(ConfigType):
     CONFIGALCHEMY_ENABLE_FUNCTION = False
     CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = 10
 
+    CONFIGALCHEMY_DEFAULT_VALUE_PRIORITY = 10
+
     #: The priority of config['TEST'] = value,
     #: config.TEST = value and
     #: config.update(TEST=value)
@@ -92,7 +94,11 @@ class BaseConfig(ConfigType):
         """
         for key in dir(self):
             if key.isupper():
-                self[key] = getattr(self, key)
+                self._set_value(
+                    key,
+                    getattr(self, key),
+                    priority=self.CONFIGALCHEMY_DEFAULT_VALUE_PRIORITY,
+                )
         return True
 
     def _from_file(self) -> bool:
@@ -171,6 +177,7 @@ class BaseConfig(ConfigType):
                     default_value=value,
                     annotation=getattr(self, "__annotations__", {}).get(key),
                 ),
+                priority=priority,
             )
             setattr(self.__class__, key, _ConfigAttribute(key, value))
         else:

@@ -23,9 +23,9 @@ class ConfigMetaItem:
 class ConfigMeta:
     __slots__ = ("field", "items")
 
-    def __init__(self, default_value: Any, field: Field):
+    def __init__(self, default_value: Any, field: Field, priority: int = 0):
         self.field = field
-        self.items: List[ConfigMetaItem] = [ConfigMetaItem(0, default_value)]
+        self.items: List[ConfigMetaItem] = [ConfigMetaItem(priority, default_value)]
 
     @property
     def value(self) -> Any:

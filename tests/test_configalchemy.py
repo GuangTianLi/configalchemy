@@ -166,3 +166,18 @@ class ConfigalchemyTestCase(unittest.TestCase):
 
         self.assertEqual("A_TEST", CConfig().A_TEST)
         self.assertEqual("B_TEST", CConfig().B_TEST)
+
+    def test_config_key_without_default_value(self):
+        class DefaultConfig(BaseConfig):
+            CONFIGALCHEMY_ENABLE_FUNCTION = True
+            CONFIGALCHEMY_CONFIG_FILE = self.json_file
+
+            def sync_function(self) -> ConfigType:
+                return {"JSON_TEST": "function"}
+
+        config = DefaultConfig()
+        self.assertEqual("JSON_TEST", config.JSON_TEST)
+        self.assertEqual(
+            config.CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY,
+            config.meta["JSON_TEST"].items[0].priority,
+        )
