@@ -42,6 +42,8 @@ class ConfigMeta:
             elif self.items[index - 1].priority == priority:
                 self.items[index - 1].values.append(value)
                 break
+        else:
+            self.items.insert(0, ConfigMetaItem(priority, value))
 
     def __repr__(self) -> str:
         return repr(self.value)

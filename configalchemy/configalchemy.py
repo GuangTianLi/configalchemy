@@ -52,7 +52,7 @@ class BaseConfig(ConfigType):
     CONFIGALCHEMY_ENABLE_FUNCTION = False
     CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = 10
 
-    CONFIGALCHEMY_DEFAULT_VALUE_PRIORITY = 10
+    CONFIGALCHEMY_DEFAULT_VALUE_PRIORITY = 0
 
     #: The priority of config['TEST'] = value,
     #: config.TEST = value and

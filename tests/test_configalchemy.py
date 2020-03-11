@@ -104,6 +104,21 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual("changed", config["TEST"])
         self.assertEqual("changed", config.TEST)
 
+    def test_lowerest_priority_update(self):
+        class DefaultConfig(BaseConfig):
+            CONFIGALCHEMY_ENABLE_FUNCTION = True
+            CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = -1
+            TEST = "default"
+
+            def sync_function(self) -> ConfigType:
+                return {"TEST": "changed"}
+
+        config = DefaultConfig()
+        self.assertEqual("default", config["TEST"])
+        self.assertEqual("default", config.TEST)
+        self.assertEqual(-1, config.meta["TEST"].items[0].priority)
+        self.assertEqual("changed", config.meta["TEST"].items[0].values[0])
+
     def test_async_update_config_from_function(self):
         class DefaultConfig(BaseConfig):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
@@ -179,5 +194,5 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual("JSON_TEST", config.JSON_TEST)
         self.assertEqual(
             config.CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY,
-            config.meta["JSON_TEST"].items[0].priority,
+            config.meta["JSON_TEST"].items[1].priority,
         )
