@@ -37,6 +37,7 @@ class FieldTestCase(unittest.TestCase):
 
     def test_json_type(self):
         value_type = Json[list]
+        self.assertIs(value_type, Json[list])
         default_value: value_type = []
         json_field = Field(
             name="TEST", default_value=default_value, annotation=value_type

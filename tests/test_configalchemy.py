@@ -117,7 +117,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
         self.assertEqual("default", config["TEST"])
         self.assertEqual("default", config.TEST)
         self.assertEqual(-1, config.meta["TEST"].items[0].priority)
-        self.assertEqual("changed", config.meta["TEST"].items[0].values[0])
+        self.assertEqual("changed", config.meta["TEST"].items[0].value)
 
     def test_async_update_config_from_function(self):
         class DefaultConfig(BaseConfig):

@@ -206,11 +206,7 @@ class BaseConfig(ConfigType):
         self._set_value(k, v, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)
 
     def __delitem__(self, key) -> None:
-        if len(self.meta[key].items[-1].values) == 1:
-            if len(self.meta[key].items) != 1:
-                del self.meta[key].items[-1]
-        else:
-            del self.meta[key].items[-1].values[-1]
+        del self.meta[key].items[-1]
 
     def update(self, __m, **kwargs):
         self.from_mapping(__m, kwargs, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)

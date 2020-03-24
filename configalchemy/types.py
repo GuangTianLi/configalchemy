@@ -1,36 +1,32 @@
-import functools
 import json
 from typing import Union, Type, cast, Any, TypeVar, Generic, TYPE_CHECKING, Tuple, Dict
+from weakref import WeakValueDictionary
 
 
-def _tp_cache(func):
-    """Internal wrapper caching __getitem__ of generic types with a fallback to
-    original function for non-hashable arguments.
-    """
-    cached = functools.lru_cache()(func)
+class OriginCached(type):
+    def __init__(self, *args, **kwargs):
+        self.__instance_map = WeakValueDictionary()
+        super().__init__(*args, **kwargs)
 
-    @functools.wraps(func)
-    def inner(*args, **kwds):  # pragma: no cover
-        try:
-            return cached(*args, **kwds)
-        except TypeError:
-            pass  # All real errors (not unhashable args) are raised below.
-        return func(*args, **kwds)
-
-    return inner
+    def __call__(self, origin):
+        if origin in self.__instance_map:
+            return self.__instance_map[origin]
+        else:
+            obj = super().__call__(origin)
+            self.__instance_map[origin] = obj
+            return obj
 
 
 JsonSerializable = Union[int, float, bool, list, dict, str]
 ItemType = TypeVar("ItemType", bound=JsonSerializable)
 
 
-class JsonMeta:
-    __slots__ = ("__origin__",)
+class JsonMeta(metaclass=OriginCached):
+    __slots__ = ("__origin__", "__weakref__")
 
     def __init__(self, origin: Type[ItemType]):
         self.__origin__ = getattr(origin, "__origin__", origin)
 
-    @_tp_cache
     def __getitem__(self, t: Type[ItemType]) -> Type[ItemType]:
         return cast(Type[ItemType], JsonMeta(origin=t))
 

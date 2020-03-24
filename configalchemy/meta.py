@@ -1,23 +1,39 @@
+import os
 from json import JSONEncoder
 from typing import Any, List, MutableMapping
 
 from configalchemy.field import Field
+from configalchemy.utils import find_caller
 
 ConfigType = MutableMapping[str, Any]
 
+CONFIG_ALCHEMY_VERBOSITY = os.getenv("CONFIG_ALCHEMY_VERBOSITY", "")
+
 
 class ConfigMetaItem:
-    __slots__ = ("priority", "values")
+    __slots__ = ("priority", "value", "setter")
 
-    def __init__(self, priority: int, value: Any):
-        self.priority = priority
-        self.values = [value]
+    if CONFIG_ALCHEMY_VERBOSITY:
+
+        def __init__(self, priority: int, value: Any):
+            self.priority = priority
+            self.value = value
+            try:
+                self.setter = find_caller()
+            except ValueError:
+                self.setter = None
+
+    else:
+
+        def __init__(self, priority: int, value: Any):
+            self.priority = priority
+            self.value = value
+            self.setter = None
 
     def __repr__(self) -> str:
-        return f"ConfigMetaItem(priority={self.priority}, value={self.values})"
+        return f"ConfigMetaItem(priority={self.priority}, value={self.value})"
 
-    def __str__(self) -> str:
-        return repr(self)
+    __str__ = __repr__
 
 
 class ConfigMeta:
@@ -29,18 +45,15 @@ class ConfigMeta:
 
     @property
     def value(self) -> Any:
-        return self.items[-1].values[-1]
+        return self.items[-1].value
 
     def set(self, priority: int, value: Any) -> None:
         value = self.field.validate(value)
         length = len(self.items)
+        item = ConfigMetaItem(priority, value)
         for index in range(length, 0, -1):
-            if self.items[index - 1].priority < priority:
-                item = ConfigMetaItem(priority, value)
+            if self.items[index - 1].priority <= priority:
                 self.items.insert(index, item)
-                break
-            elif self.items[index - 1].priority == priority:
-                self.items[index - 1].values.append(value)
                 break
         else:
             self.items.insert(0, ConfigMetaItem(priority, value))
@@ -48,8 +61,7 @@ class ConfigMeta:
     def __repr__(self) -> str:
         return repr(self.value)
 
-    def __str__(self) -> str:
-        return str(self.value)
+    __str__ = __repr__
 
     def __enter__(self):
         """Prepare to implement optimistic raw lock if necessary"""

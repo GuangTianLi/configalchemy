@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import Mock
 
-from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder, ConfigMetaItem
+from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
 
 
 class MetaTestCase(unittest.TestCase):
@@ -10,7 +10,6 @@ class MetaTestCase(unittest.TestCase):
         default_value = 0
         int_field = Mock()
         config_meta = ConfigMeta(default_value=default_value, field=int_field)
-
         with config_meta:
             priority = 0
             int_field.validate = Mock(return_value=priority)
@@ -26,14 +25,13 @@ class MetaTestCase(unittest.TestCase):
             self.assertEqual(10, config_meta.value)
 
             self.assertEqual(0, config_meta.items[0].priority)
-            self.assertEqual([0, 0], config_meta.items[0].values)
-            self.assertEqual(5, config_meta.items[1].priority)
-            self.assertEqual(
-                str(ConfigMetaItem(priority=5, value=5)), str(config_meta.items[1])
-            )
-            self.assertEqual([5], config_meta.items[1].values)
-            self.assertEqual(10, config_meta.items[2].priority)
-            self.assertEqual([10], config_meta.items[2].values)
+            self.assertEqual(0, config_meta.items[0].value)
+            self.assertEqual(0, config_meta.items[1].priority)
+            self.assertEqual(0, config_meta.items[1].value)
+            self.assertEqual(5, config_meta.items[2].priority)
+            self.assertEqual(5, config_meta.items[2].value)
+            self.assertEqual(10, config_meta.items[3].priority)
+            self.assertEqual(10, config_meta.items[3].value)
 
     def test_json_encode(self):
         default_value = 0
@@ -46,7 +44,7 @@ class MetaTestCase(unittest.TestCase):
         self.assertEqual("0", str(config_meta))
         self.assertEqual("0", repr(config_meta))
         self.assertEqual(
-            "[ConfigMetaItem(priority=0, value=[0])]", str(config_meta.items)
+            "[ConfigMetaItem(priority=0, value=0)]", str(config_meta.items)
         )
 
 
