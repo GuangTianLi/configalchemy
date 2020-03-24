@@ -23,8 +23,9 @@ def find_caller() -> Optional[str]:
         co = f.f_code
         filename = os.path.normcase(co.co_filename)
         if filename == _srcfile:
-            f = f.f_back
-            continue
+            if f.f_back:
+                f = f.f_back
+                continue
         sio = io.StringIO()
         sio.write("Stack (most recent call last):\n")
         traceback.print_stack(f, file=sio)
