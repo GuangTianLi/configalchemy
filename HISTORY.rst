@@ -2,6 +2,12 @@
 History
 =======
 
+0.3.* (2020-03)
+------------------
+
+* Add find_caller to trace source of config value
+* Refactory ConfigMeta data structure
+
 0.2.* (2019-08)
 ------------------
 
