@@ -171,8 +171,24 @@ You can use Json data type - `configalchemy` will use json.loads to typecast.
     >>> {"name": "test"}
 
 
+Advanced Usage
+=====================================
+
+
+Lazy
+---------------
+
+Use `lazy` to turn any callable into a lazy evaluated callable. Results are not memoized; the
+function is evaluated on first access.
+
+Proxy
+------------------
+
+Use `proxy` to turn any callable into a lazy evaluated callable. Results are not memoized; the
+function is evaluated on every access.
+
 Access config from Apollo
-==============================================
+-------------------------------------------
 
 `Apollo - A reliable configuration management system <https://github.com/ctripcorp/apollo>`_
 
@@ -189,3 +205,6 @@ You can inherit from :any:`ApolloBaseConfig` to access config from Apollo.
         APOLLO_APP_ID = ""
         APOLLO_CLUSTER = "default"
         APOLLO_NAMESPACE = "application"
+
+
+
