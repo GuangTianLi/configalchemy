@@ -2,6 +2,12 @@
 History
 =======
 
+0.4.* (2020-06)
+------------------
+
+* Refatory configure function
+* Support property configuration
+
 0.3.* (2020-03)
 ------------------
 
