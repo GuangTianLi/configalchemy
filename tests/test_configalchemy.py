@@ -66,7 +66,6 @@ class ConfigalchemyTestCase(unittest.TestCase):
             JSON_TEST = "default"
 
         config = DefaultConfig()
-
         self.assertEqual("JSON_TEST", config["JSON_TEST"])
         self.assertEqual("JSON_TEST", config.JSON_TEST)
 
@@ -97,7 +96,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
             TEST = "default"
 
-            def sync_function(self) -> ConfigType:
+            def configuration_function(self) -> ConfigType:
                 return {"TEST": "changed"}
 
         config = DefaultConfig()
@@ -110,7 +109,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
             CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY = -1
             TEST = "default"
 
-            def sync_function(self) -> ConfigType:
+            def configuration_function(self) -> ConfigType:
                 return {"TEST": "changed"}
 
         config = DefaultConfig()
@@ -124,7 +123,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
             TEST = "default"
 
-            async def async_function(self) -> ConfigType:
+            async def configuration_function(self) -> ConfigType:
                 return {"TEST": "changed"}
 
         config = DefaultConfig()
@@ -150,11 +149,8 @@ class ConfigalchemyTestCase(unittest.TestCase):
             THIRD = "1"
             FOURTH = 1
 
-            def sync_function(self) -> ConfigType:
-                return {"SECOND": "2", "FOURTH": "2"}
-
-            async def async_function(self) -> ConfigType:
-                return {"THIRD": 2, "FOURTH": 2}
+            def configuration_function(self) -> ConfigType:
+                return {"SECOND": "2", "THIRD": 2, "FOURTH": "2"}
 
         config = DefaultConfig()
         os.remove(current_json_file)
@@ -176,7 +172,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
         class CConfig(AConfig, BConfig):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
 
-            def sync_function(self) -> ConfigType:
+            def configuration_function(self) -> ConfigType:
                 return {"A_TEST": "A_TEST", "B_TEST": "B_TEST"}
 
         self.assertEqual("A_TEST", CConfig().A_TEST)
@@ -187,7 +183,7 @@ class ConfigalchemyTestCase(unittest.TestCase):
             CONFIGALCHEMY_ENABLE_FUNCTION = True
             CONFIGALCHEMY_CONFIG_FILE = self.json_file
 
-            def sync_function(self) -> ConfigType:
+            def configuration_function(self) -> ConfigType:
                 return {"JSON_TEST": "function"}
 
         config = DefaultConfig()
@@ -196,3 +192,16 @@ class ConfigalchemyTestCase(unittest.TestCase):
             config.CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY,
             config.meta["JSON_TEST"].items[1].priority,
         )
+
+    def test_config_with_property(self):
+        class DefaultConfig(BaseConfig):
+            PREFIX = "prefix"
+            NAME = "name"
+
+            @property
+            def FULL_NAME(self):
+                return f"{self.PREFIX}-{self.NAME}"
+
+        config = DefaultConfig()
+        config.NAME = "world"
+        self.assertEqual("prefix-world", config.FULL_NAME)

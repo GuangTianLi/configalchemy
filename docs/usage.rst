@@ -4,7 +4,7 @@ Usage
 
 To use ConfigAlchemy in a project.
 
-.. note:: the config key should be **uppercase**.
+.. note:: the configuration key should be **uppercase**.
 
 .. code-block:: python
 
@@ -75,7 +75,7 @@ Define the **CONFIGALCHEMY_ENV_PREFIX** to enable access config from environment
     >>> config['NAME']
     env
 
-Enable Config File
+Enable Configure from File
 ---------------------------------
 
 Define **CONFIGALCHEMY_CONFIG_FILE** to enable access config from config file:
@@ -95,33 +95,38 @@ Define **CONFIGALCHEMY_CONFIG_FILE** to enable access config from config file:
     >>> config['NAME']
     json
 
-Enable call Function to Access Config
+Enable Configure with function return value
 ----------------------------------------------------
-Define **CONFIGALCHEMY_ENABLE_FUNCTION** to enable access your config from function return value:
+Define **CONFIGALCHEMY_ENABLE_FUNCTION** to configure from function return value (support coroutine):
 
 .. code-block:: python
 
     from configalchemy import BaseConfig, ConfigType
 
 
-    class DefaultConfig(BaseConfig):
-        ENABLE_CONFIG_LIST = True
+    class SyncDefaultConfig(BaseConfig):
+        CONFIGALCHEMY_ENABLE_FUNCTION = True
         TYPE = "base"
-        NAME = "base"
 
-        def sync_function(self) -> ConfigType:
-            return {"NAME": "sync"}
+        def configuration_function(self) -> ConfigType:
+            return {"TYPE": "sync"}
+
+
+    class AsyncDefaultConfig(BaseConfig):
+        CONFIGALCHEMY_ENABLE_FUNCTION = True
+        TYPE = "base"
 
         async def async_function(self) -> ConfigType:
             return {"TYPE": "async"}
 
 
-    config = DefaultConfig()
+    sync_config = SyncDefaultConfig()
+    async_config = AsyncDefaultConfig()
 
-    >>> config['TYPE']
-    async
-    >>> config['NAME']
+    >>> sync_config['TYPE']
     sync
+    >>> async_config['NAME']
+    async
 
 
 Auto Validation and Dynamic typecast

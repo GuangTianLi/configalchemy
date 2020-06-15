@@ -75,4 +75,4 @@ class ConfigMetaJSONEncoder(JSONEncoder):
     def default(self, o) -> Any:
         if isinstance(o, ConfigMeta):
             return o.value
-        super().default(o)
+        return super().default(o)

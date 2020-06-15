@@ -61,7 +61,7 @@ class ApolloBaseConfig(BaseConfig):
         else:
             raise ConfigException(f"loading config failed: {url}")
 
-    def sync_function(self) -> ConfigType:
+    def configuration_function(self) -> ConfigType:
         self.from_mapping(
             self._access_config_by_namespace(self.APOLLO_NAMESPACE),
             priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY,

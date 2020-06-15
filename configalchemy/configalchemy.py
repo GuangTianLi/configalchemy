@@ -1,5 +1,6 @@
 import asyncio
 import errno
+import inspect
 import json
 import logging
 import os
@@ -13,6 +14,7 @@ from typing import (
     Optional,
     TypeVar,
     Type,
+    TextIO,
 )
 from weakref import ref
 
@@ -25,7 +27,7 @@ ConfigType = MutableMapping[str, Any]
 class BaseConfig(ConfigType):
     """Initialize the :any:`BaseConfig` with the Priority::
 
-        config from env > config from local file > config from function > default config
+        configure from env > configure from local file > configure from function > default configuration
 
     Example of class-based configuration::
 
@@ -74,18 +76,18 @@ class BaseConfig(ConfigType):
 
         #: function
         if self.CONFIGALCHEMY_ENABLE_FUNCTION:
-            #: Sync
-            self.access_config_from_function(
-                priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
-            )
-
-            # Async
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(
-                self.access_config_from_coroutine(
+            if inspect.iscoroutinefunction(self.configuration_function):
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(
+                    self.access_config_from_coroutine(
+                        priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+                    )
+                )
+            else:
+                self.access_config_from_function(
                     priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
                 )
-            )
+
         global _current_config_ref
         _current_config_ref = ref(self)
 
@@ -93,7 +95,7 @@ class BaseConfig(ConfigType):
         """Setup the default values and field of value from self.
         """
         for key in dir(self):
-            if key.isupper():
+            if key.isupper() and not isinstance(getattr(self.__class__, key), property):
                 self._set_value(
                     key,
                     getattr(self, key),
@@ -111,7 +113,7 @@ class BaseConfig(ConfigType):
         )
         try:
             with open(filename) as f:
-                obj = json.load(f)
+                obj = self.load_file(f)
         except IOError as e:
             if self.CONFIGALCHEMY_LOAD_FILE_SILENT and e.errno in (
                 errno.ENOENT,
@@ -125,6 +127,9 @@ class BaseConfig(ConfigType):
             return self.from_mapping(
                 obj, priority=self.CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY
             )
+
+    def load_file(self, file: TextIO) -> ConfigType:
+        return json.load(file)
 
     def from_mapping(self, *mappings: ConfigType, priority: int) -> bool:
         """Updates the config like :meth:`update` ignoring items with non-upper
@@ -149,22 +154,19 @@ class BaseConfig(ConfigType):
                 )
         return True
 
-    def sync_function(self) -> ConfigType:
-        return {}
-
-    async def async_function(self) -> ConfigType:
+    def configuration_function(self) -> ConfigType:
         return {}
 
     def access_config_from_function(self, priority: int) -> bool:
-        """Updates the values in the config from the sync_access_config_list.
+        """Updates the values in the config from the configuration_function.
         """
-        self.from_mapping(self.sync_function(), priority=priority)
+        self.from_mapping(self.configuration_function(), priority=priority)
         return True
 
     async def access_config_from_coroutine(self, priority: int) -> bool:
-        """Async updates the values in the config from the async_access_config_list.
+        """Async updates the values in the config from the configuration_function.
         """
-        self.from_mapping(await self.async_function(), priority=priority)
+        self.from_mapping(await self.configuration_function(), priority=priority)  # type: ignore
         return True
 
     def _set_value(self, key: str, value: Any, priority: int):
