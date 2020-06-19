@@ -123,3 +123,7 @@ def lazy(obj: Callable[..., LazyLoadType], *args, **kwargs) -> LazyLoadType:
 
 def proxy(obj: Callable[..., LazyLoadType], *args, **kwargs) -> LazyLoadType:
     return ProxyLazyObject(obj, args, kwargs)  # type: ignore
+
+
+def reset_lazy(obj):
+    object.__setattr__(obj, "__attr__", None)

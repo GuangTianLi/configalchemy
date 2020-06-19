@@ -4,7 +4,7 @@ import unittest
 from concurrent.futures.thread import ThreadPoolExecutor
 from unittest.mock import MagicMock
 
-from configalchemy.lazy import lazy, proxy
+from configalchemy.lazy import lazy, proxy, reset_lazy
 
 
 class LazyTestCase(unittest.TestCase):
@@ -32,12 +32,29 @@ class LazyTestCase(unittest.TestCase):
         number = lazy(get)
 
         def task(num):
-            self.assertEqual(num + 1, number + 1)
+            self.assertEqual(num + 1, number + num)
 
         with ThreadPoolExecutor(max_workers=4) as worker:
-            worker.map(task, range(4))
+            for _ in worker.map(task, range(4)):
+                _
 
         self.assertEqual(1, call_mock.call_count)
+        object.__setattr__(number, "__attr__", None)
+
+    def test_reset_lazy(self):
+        call_mock = MagicMock()
+
+        def get() -> int:
+            call_mock()
+            return 1
+
+        number = lazy(get)
+
+        self.assertEqual(1 + 1, number + 1)
+        self.assertEqual(1, call_mock.call_count)
+        reset_lazy(number)
+        self.assertEqual(1 + 1, number + 1)
+        self.assertEqual(2, call_mock.call_count)
 
     def test_lazy_load_operations_math(self):
         call_mock = MagicMock()

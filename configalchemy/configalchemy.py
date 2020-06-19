@@ -17,7 +17,7 @@ from typing import (
     TextIO,
 )
 from weakref import ref
-
+from threading import Thread
 from configalchemy.field import Field
 from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
 
@@ -77,12 +77,18 @@ class BaseConfig(ConfigType):
         #: function
         if self.CONFIGALCHEMY_ENABLE_FUNCTION:
             if inspect.iscoroutinefunction(self.configuration_function):
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(
-                    self.access_config_from_coroutine(
-                        priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
-                    )
-                )
+                # use Thead to avoid initializing with running event loop.
+                class TempThread(Thread):
+                    def run(thread_self) -> None:
+                        asyncio.run(
+                            self.access_config_from_coroutine(
+                                priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
+                            )
+                        )
+
+                temp_thread = TempThread()
+                temp_thread.start()
+                temp_thread.join()
             else:
                 self.access_config_from_function(
                     priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
@@ -120,7 +126,7 @@ class BaseConfig(ConfigType):
                 errno.EISDIR,
             ):
                 return False
-            e.strerror = "Unable to load configuration file (%s)" % e.strerror
+            e.strerror = f"Unable to load configuration file {e.strerror}"
             raise
         else:
             logging.info(f"Loaded configuration file: {filename}")

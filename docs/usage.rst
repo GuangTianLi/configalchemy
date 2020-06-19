@@ -186,11 +186,52 @@ Lazy
 Use `lazy` to turn any callable into a lazy evaluated callable. Results are not memoized; the
 function is evaluated on first access.
 
+
+.. code-block:: python
+
+    from configalchemy.lazy import lazy, reset_lazy
+
+
+    def get_name():
+        print("evaluating")
+        return "World"
+
+
+    lazy_name = lazy(get_name)
+    >>> print(f"Hello {lazy_name}")
+    evaluating
+    Hello World
+    >>> print(f"Hello {lazy_name}")
+    Hello World
+    >>> reset_lazy(lazy_name)
+    >>> print(f"Hello {lazy_name}")
+    evaluating
+    Hello World
+
 Proxy
 ------------------
 
 Use `proxy` to turn any callable into a lazy evaluated callable. Results are not memoized; the
 function is evaluated on every access.
+
+
+.. code-block:: python
+
+    from configalchemy.lazy import proxy
+
+
+    def get_name():
+        print("evaluating")
+        return "World"
+
+
+    lazy_name = proxy(get_name)
+    >>> print(f"Hello {lazy_name}")
+    evaluating
+    Hello World
+    >>> print(f"Hello {lazy_name}")
+    evaluating
+    Hello World
 
 Access config from Apollo
 -------------------------------------------

@@ -49,6 +49,7 @@ class ApolloBaseConfig(BaseConfig):
             f"{self.APOLLO_SERVER_URL}/{route}/{self.APOLLO_APP_ID}/"
             f"{self.APOLLO_CLUSTER}/{namespace}"
         )
+        logging.info(f"Access apollo server url: {url}")
         response = requests.get(url)
         if response.ok:
             data = response.json()
@@ -119,7 +120,7 @@ class ApolloBaseConfig(BaseConfig):
     def long_poll(self):
         while True:
             try:
-                logging.debug("start long poll")
+                logging.debug("start apollo configuration long poll")
                 self.long_poll_from_apollo()
             except ConfigException:
                 time.sleep(5)

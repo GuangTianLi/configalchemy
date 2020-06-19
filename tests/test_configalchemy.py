@@ -2,7 +2,7 @@
 import json
 import os
 import unittest
-
+import asyncio
 from configalchemy import BaseConfig, ConfigType
 
 
@@ -129,6 +129,21 @@ class ConfigalchemyTestCase(unittest.TestCase):
         config = DefaultConfig()
         self.assertEqual("changed", config["TEST"])
         self.assertEqual("changed", config.TEST)
+
+    def test_async_update_config_from_function_within_event_loop(self):
+        class DefaultConfig(BaseConfig):
+            CONFIGALCHEMY_ENABLE_FUNCTION = True
+            TEST = "default"
+
+            async def configuration_function(self) -> ConfigType:
+                return {"TEST": "changed"}
+
+        async def test():
+            config = DefaultConfig()
+            self.assertEqual("changed", config["TEST"])
+            self.assertEqual("changed", config.TEST)
+
+        asyncio.run(test())
 
     def test_config_priority(self):
         os.environ["test_FOURTH"] = "4"
