@@ -80,11 +80,13 @@ class BaseConfig(ConfigType):
                 # use Thead to avoid initializing with running event loop.
                 class TempThread(Thread):
                     def run(thread_self) -> None:
-                        asyncio.run(
+                        loop = asyncio.new_event_loop()
+                        loop.run_until_complete(
                             self.access_config_from_coroutine(
                                 priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
                             )
                         )
+                        loop.close()
 
                 temp_thread = TempThread()
                 temp_thread.start()
