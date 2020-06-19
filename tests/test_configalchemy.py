@@ -143,7 +143,9 @@ class ConfigalchemyTestCase(unittest.TestCase):
             self.assertEqual("changed", config["TEST"])
             self.assertEqual("changed", config.TEST)
 
-        asyncio.run(test())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(test())
+        loop.close()
 
     def test_config_priority(self):
         os.environ["test_FOURTH"] = "4"
