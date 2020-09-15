@@ -5,8 +5,9 @@ ConfigAlchemy
 .. image:: https://img.shields.io/pypi/v/configalchemy.svg
         :target: https://pypi.python.org/pypi/configalchemy
 
-.. image:: https://img.shields.io/travis/GuangTianLi/configalchemy.svg
-        :target: https://travis-ci.org/GuangTianLi/configalchemy
+.. image:: https://github.com/GuangTianLi/configalchemy/workflows/test/badge.svg
+        :target: https://github.com/GuangTianLi/configalchemy/actions
+        :alt: CI Test Status
 
 .. image:: https://readthedocs.org/projects/configalchemy/badge/?version=latest
         :target: https://configalchemy.readthedocs.io/en/latest/?badge=latest

@@ -11,7 +11,7 @@ class ValidateException(Exception):
     def __repr__(self) -> str:
         return f"""{self.name}'s value is invalid:
 
-value: {self.value} 
+value: {self.value}
 type {type(self.value)}
 """
 

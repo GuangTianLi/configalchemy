@@ -1,4 +1,3 @@
-import logging
 import threading
 import time
 import unittest
@@ -6,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import requests
 
-from configalchemy.contrib.apollo import ApolloBaseConfig, ConfigException
+from configalchemy.contrib.apollo import ApolloBaseConfig, ConfigException, logger
 
 
 class ApolloConfigTestCase(unittest.TestCase):
@@ -36,7 +35,7 @@ class ApolloConfigTestCase(unittest.TestCase):
         self.assertEqual(1, start_long_poll.call_count)
 
     @patch.object(requests, "get")
-    @patch.object(logging, "debug")
+    @patch.object(logger, "debug")
     @patch.object(time, "sleep")
     def test_long_poll(self, time_sleep, logging_debug, requests_get):
         class DefaultConfig(ApolloBaseConfig):

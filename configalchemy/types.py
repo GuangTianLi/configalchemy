@@ -77,4 +77,6 @@ class Boolean(DefaultTypeCast[bool]):
             return bool(value)
 
 
-DEFAULT_TYPE_CAST: Dict[Type, Type[DefaultTypeCast]] = {bool: Boolean}
+DEFAULT_TYPE_CAST: Dict[Type, Type[DefaultTypeCast]] = {
+    bool: Boolean,
+}

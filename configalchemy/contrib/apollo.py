@@ -7,13 +7,16 @@ from typing import Dict
 
 import requests
 
-from ..configalchemy import BaseConfig, ConfigType
+from configalchemy import BaseConfig, ConfigType
 
 time_counter = time.time
 
 
 class ConfigException(Exception):
     ...
+
+
+logger = logging.getLogger(__name__)
 
 
 class ApolloBaseConfig(BaseConfig):
@@ -35,7 +38,7 @@ class ApolloBaseConfig(BaseConfig):
         super().__init__()
 
     def start_long_poll(self):
-        logging.info("start long poll")
+        logger.info("start long poll")
         thread = threading.Thread(target=self.long_poll)
         thread.daemon = True
         thread.start()
@@ -49,7 +52,7 @@ class ApolloBaseConfig(BaseConfig):
             f"{self.APOLLO_SERVER_URL}/{route}/{self.APOLLO_APP_ID}/"
             f"{self.APOLLO_CLUSTER}/{namespace}"
         )
-        logging.info(f"Access apollo server url: {url}")
+        logger.info(f"Access apollo server url: {url}")
         response = requests.get(url)
         if response.ok:
             data = response.json()
@@ -57,7 +60,7 @@ class ApolloBaseConfig(BaseConfig):
             self.apollo_notification_map[data["namespaceName"]]["data"] = data.get(
                 "configurations", {}
             )
-            logging.debug(f"Got from apollo: {data}")
+            logger.debug(f"Got from apollo: {data}")
             return data.get("configurations", {})
         else:
             raise ConfigException(f"loading config failed: {url}")
@@ -92,11 +95,11 @@ class ApolloBaseConfig(BaseConfig):
         )
 
         if r.status_code == HTTPStatus.NOT_MODIFIED:
-            logging.info("Apollo No change, loop...")
+            logger.info("Apollo No change, loop...")
         elif r.status_code == HTTPStatus.OK:
             data = r.json()
             for entry in data:
-                logging.info(
+                logger.info(
                     "%s has changes: notificationId=%d"
                     % (entry["namespaceName"], entry["notificationId"])
                 )
@@ -120,7 +123,7 @@ class ApolloBaseConfig(BaseConfig):
     def long_poll(self):
         while True:
             try:
-                logging.debug("start apollo configuration long poll")
+                logger.debug("start apollo configuration long poll")
                 self.long_poll_from_apollo()
             except ConfigException:
                 time.sleep(5)

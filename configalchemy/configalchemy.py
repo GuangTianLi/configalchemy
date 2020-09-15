@@ -23,6 +23,8 @@ from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
 
 ConfigType = MutableMapping[str, Any]
 
+logger = logging.getLogger(__name__)
+
 
 class BaseConfig(ConfigType):
     """Initialize the :any:`BaseConfig` with the Priority::
@@ -131,7 +133,7 @@ class BaseConfig(ConfigType):
             e.strerror = f"Unable to load configuration file {e.strerror}"
             raise
         else:
-            logging.info(f"Loaded configuration file: {filename}")
+            logger.info(f"Loaded configuration file: {filename}")
             return self.from_mapping(
                 obj, priority=self.CONFIGALCHEMY_CONFIG_FILE_VALUE_PRIORITY
             )
