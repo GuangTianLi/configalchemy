@@ -102,8 +102,7 @@ class BaseConfig(ConfigType):
         _current_config_ref = ref(self)
 
     def _setup(self):
-        """Setup the default values and field of value from self.
-        """
+        """Setup the default values and field of value from self."""
         for key in dir(self):
             if key.isupper() and not isinstance(getattr(self.__class__, key), property):
                 self._set_value(
@@ -152,8 +151,7 @@ class BaseConfig(ConfigType):
         return True
 
     def _from_env(self) -> bool:
-        """Updates the values in the config from the environment variable.
-        """
+        """Updates the values in the config from the environment variable."""
         for key, value in self.items():
             env_value = os.getenv(f"{self.CONFIGALCHEMY_ENV_PREFIX}{key}")
             if env_value is not None:
@@ -168,14 +166,12 @@ class BaseConfig(ConfigType):
         return {}
 
     def access_config_from_function(self, priority: int) -> bool:
-        """Updates the values in the config from the configuration_function.
-        """
+        """Updates the values in the config from the configuration_function."""
         self.from_mapping(self.configuration_function(), priority=priority)
         return True
 
     async def access_config_from_coroutine(self, priority: int) -> bool:
-        """Async updates the values in the config from the configuration_function.
-        """
+        """Async updates the values in the config from the configuration_function."""
         self.from_mapping(await self.configuration_function(), priority=priority)  # type: ignore
         return True
 
