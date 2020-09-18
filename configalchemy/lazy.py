@@ -6,7 +6,14 @@ LazyLoadType = TypeVar("LazyLoadType")
 
 
 class LazyObject:
-    __slots__ = ("__obj__", "__kwargs__", "__attr__", "__lock__", "__dict__")
+    __slots__ = (
+        "__obj__",
+        "__args__",
+        "__kwargs__",
+        "__attr__",
+        "__lock__",
+        "__dict__",
+    )
 
     def __init__(self, obj: Callable[..., LazyLoadType], args, kwargs):
         object.__setattr__(self, "__obj__", obj)
@@ -55,6 +62,15 @@ class LazyObject:
     def __delitem__(self, key):
         del self.__get_current_object__()[key]
 
+    async def __anext__(self):
+        return await self.__get_current_object__().__anext__()
+
+    async def __aenter__(self):
+        return await self.__get_current_object__().__aenter__()
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return await self.__get_current_object__().__aexit__(exc_type, exc_val, exc_tb)
+
     __setattr__ = lambda x, n, v: setattr(
         x.__get_current_object__(), n, v  # type: ignore
     )
@@ -70,6 +86,7 @@ class LazyObject:
     __call__ = lambda x, *a, **kw: x.__get_current_object__()(*a, **kw)
     __len__ = lambda x: len(x.__get_current_object__())
     __getitem__ = lambda x, i: x.__get_current_object__()[i]
+    __aiter__ = lambda x: x.__get_current_object__().__aiter__()
     __iter__ = lambda x: iter(x.__get_current_object__())
     __contains__ = lambda x, i: i in x.__get_current_object__()
     __add__ = lambda x, o: x.__get_current_object__() + o

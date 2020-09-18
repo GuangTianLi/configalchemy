@@ -1,10 +1,27 @@
+import asyncio
 import copy
 import time
 import unittest
 from concurrent.futures.thread import ThreadPoolExecutor
+from functools import wraps
 from unittest.mock import MagicMock
 
 from configalchemy.lazy import lazy, proxy, reset_lazy
+
+
+def async_test(func):
+    @wraps(func)
+    def wrapped(self):
+        async def _():
+            await func(self)
+
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(_())
+        finally:
+            loop.close()
+
+    return wrapped
 
 
 class LazyTestCase(unittest.TestCase):
@@ -132,6 +149,38 @@ class LazyTestCase(unittest.TestCase):
         self.assertEqual(0, 2 % number)
 
         self.assertEqual(14, call_mock.call_count)
+
+    @async_test
+    async def test_coroutine(self):
+        aenter = MagicMock()
+        aexit = MagicMock()
+
+        class Reader:
+            readline = iter([b"test", b""])
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                val = next(self.readline)
+                if val == b"":
+                    raise StopAsyncIteration
+                return val
+
+            async def __aenter__(self):
+                aenter()
+                return self
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                aexit()
+
+        reader = lazy(Reader)
+        self.assertEqual([b"test"], [v async for v in reader])
+
+        async with reader:
+            pass
+        aenter.assert_called_once()
+        aexit.assert_called_once()
 
 
 if __name__ == "__main__":

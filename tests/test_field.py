@@ -5,7 +5,6 @@ from unittest.mock import Mock
 
 from configalchemy.field import Field, ValidateException
 from configalchemy.types import Json
-from configalchemy import BaseConfig
 
 
 class FieldTestCase(unittest.TestCase):

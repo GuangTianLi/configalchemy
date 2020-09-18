@@ -24,7 +24,7 @@ ConfigAlchemy
 
 
 
-The Settings and Configuration on ideal practices for app development.
+The Settings and Configuration on ideal practices for app development and package building.
 
 
 * Free software: MIT license
@@ -48,17 +48,11 @@ Example
         from configalchemy import BaseConfig
 
         class DefaultConfig(BaseConfig):
-            TEST = "test"
+            NAME = "test"
 
         config = DefaultConfig()
-        config.TEST # attribute style access
+        config.NAME
         >>> 'test'
-        config['TEST'] # dict item style access
-        >>> 'test'
-        config.get('TEST') # dict get style access
-        >>> 'test'
-        config.get('HOST', 'local') # Providing defaults
-        >>> 'local'
 
 Features
 ----------
@@ -72,7 +66,7 @@ Features
 - Override config value from multiple source with **priority supported**
 
     - Callable function return value
-    - File (json)
+    - File (default: json)
     - Environment Variables
 
 - **Proper Typecast** before overriding
