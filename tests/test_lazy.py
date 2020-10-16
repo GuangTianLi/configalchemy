@@ -4,6 +4,7 @@ import time
 import unittest
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
+from typing import Optional
 from unittest.mock import MagicMock
 
 from configalchemy.lazy import lazy, proxy, reset_lazy
@@ -72,6 +73,20 @@ class LazyTestCase(unittest.TestCase):
         reset_lazy(number)
         self.assertEqual(1 + 1, number + 1)
         self.assertEqual(2, call_mock.call_count)
+
+    def test_lazy_none(self):
+        call_mock = MagicMock()
+
+        def option() -> Optional[int]:
+            call_mock()
+            return None
+
+        op = lazy(option)
+
+        self.assertFalse(bool(op))
+        self.assertFalse(bool(op))
+        self.assertFalse(bool(op))
+        self.assertEqual(1, call_mock.call_count)
 
     def test_lazy_load_operations_math(self):
         call_mock = MagicMock()

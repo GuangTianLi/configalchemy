@@ -4,6 +4,8 @@ from typing import TypeVar, Callable
 
 LazyLoadType = TypeVar("LazyLoadType")
 
+_sentry = object()
+
 
 class LazyObject:
     __slots__ = (
@@ -19,14 +21,14 @@ class LazyObject:
         object.__setattr__(self, "__obj__", obj)
         object.__setattr__(self, "__args__", args)
         object.__setattr__(self, "__kwargs__", kwargs)
-        object.__setattr__(self, "__attr__", None)
+        object.__setattr__(self, "__attr__", _sentry)
         object.__setattr__(self, "__lock__", Lock())
 
     def __get_current_object__(self):
         # evaluated once on first access
-        if self.__attr__ is None:
+        if self.__attr__ is _sentry:
             with self.__lock__:
-                if self.__attr__ is None:
+                if self.__attr__ is _sentry:
                     object.__setattr__(
                         self,
                         "__attr__",
@@ -143,5 +145,5 @@ def proxy(obj: Callable[..., LazyLoadType], *args, **kwargs) -> LazyLoadType:
 
 
 def reset_lazy(obj):
-    object.__setattr__(obj, "__attr__", None)
+    object.__setattr__(obj, "__attr__", _sentry)
     return obj
