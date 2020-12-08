@@ -2,6 +2,11 @@
 History
 =======
 
+0.5.* (2020-12)
+------------------
+
+* Support nested config for large modular purpose
+
 0.4.* (2020-06)
 ------------------
 

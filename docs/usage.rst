@@ -179,6 +179,23 @@ You can use Json data type - `configalchemy` will use json.loads to typecast.
 Advanced Usage
 =====================================
 
+Nested Config for Modular Purpose
+------------------------------------------
+
+
+
+.. code-block:: python
+
+    class NestedConfig(BaseConfig):
+        NAME = "nested"
+
+    class DefaultConfig(BaseConfig):
+        NESTED_CONFIG = NestedConfig()
+
+    config = DefaultConfig()
+    config.update(NESTED_CONFIG={"NAME": "updated"})
+     >>> config.NESTED_CONFIG.NAME
+     updated
 
 Lazy
 ---------------
