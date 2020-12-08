@@ -15,6 +15,8 @@ from typing import (
     TypeVar,
     Type,
     TextIO,
+    Mapping,
+    overload,
 )
 from weakref import ref
 from threading import Thread
@@ -140,7 +142,7 @@ class BaseConfig(ConfigType):
     def load_file(self, file: TextIO) -> ConfigType:
         return json.load(file)
 
-    def from_mapping(self, *mappings: ConfigType, priority: int) -> bool:
+    def from_mapping(self, *mappings: Mapping[str, Any], priority: int) -> bool:
         """Updates the config like :meth:`update` ignoring items with non-upper
         keys.
         """
@@ -162,7 +164,7 @@ class BaseConfig(ConfigType):
                 )
         return True
 
-    def configuration_function(self) -> ConfigType:
+    def configuration_function(self) -> Mapping[str, Any]:
         return {}
 
     def access_config_from_function(self, priority: int) -> bool:
@@ -172,7 +174,8 @@ class BaseConfig(ConfigType):
 
     async def access_config_from_coroutine(self, priority: int) -> bool:
         """Async updates the values in the config from the configuration_function."""
-        self.from_mapping(await self.configuration_function(), priority=priority)  # type: ignore
+        data = await self.configuration_function()  # type: ignore
+        self.from_mapping(data, priority=priority)
         return True
 
     def _set_value(self, key: str, value: Any, priority: int):
@@ -216,7 +219,9 @@ class BaseConfig(ConfigType):
     def __delitem__(self, key) -> None:
         del self.meta[key].items[-1]
 
-    def update(self, __m, **kwargs):
+    def update(self, __m=None, **kwargs):
+        if __m is None:
+            __m = {}
         self.from_mapping(__m, kwargs, priority=self.CONFIGALCHEMY_SETITEM_PRIORITY)
 
     def get(self, key: str, default=None):
@@ -256,6 +261,17 @@ class BaseConfig(ConfigType):
             separators=separators,
             sort_keys=sort_keys,
         )
+
+    @classmethod
+    def __type_check__(cls, instance: Any) -> bool:
+        return isinstance(instance, cls)
+
+    def __typecast__(self, value: Any):
+        if isinstance(value, Mapping):
+            self.update(value)
+            return self
+        else:
+            raise TypeError(f"{value} - type: {type(value)} can not be typecast")
 
 
 class _ConfigAttribute:

@@ -222,3 +222,14 @@ class ConfigalchemyTestCase(unittest.TestCase):
         config = DefaultConfig()
         config.NAME = "world"
         self.assertEqual("prefix-world", config.FULL_NAME)
+
+    def test_config_with_nested_config(self):
+        class NestedConfig(BaseConfig):
+            NAME = "nested"
+
+        class DefaultConfig(BaseConfig):
+            NESTED_CONFIG = NestedConfig()
+
+        config = DefaultConfig()
+        config.update(NESTED_CONFIG={"NAME": "updated"})
+        self.assertEqual("updated", config.NESTED_CONFIG.NAME)
