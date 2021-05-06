@@ -1,42 +1,22 @@
 import copy
-from threading import Lock
+from threading import Lock, local as _local
 from typing import TypeVar, Callable
+
+__all__ = ["local", "lazy", "proxy", "reset_lazy"]
 
 LazyLoadType = TypeVar("LazyLoadType")
 
 _sentry = object()
 
 
-class LazyObject:
-    __slots__ = (
-        "__obj__",
-        "__args__",
-        "__kwargs__",
-        "__attr__",
-        "__lock__",
-        "__dict__",
-    )
-
+class BaseProxy:
     def __init__(self, obj: Callable[..., LazyLoadType], args, kwargs):
         object.__setattr__(self, "__obj__", obj)
         object.__setattr__(self, "__args__", args)
         object.__setattr__(self, "__kwargs__", kwargs)
-        object.__setattr__(self, "__attr__", _sentry)
-        object.__setattr__(self, "__lock__", Lock())
 
     def __get_current_object__(self):
-        # evaluated once on first access
-        if self.__attr__ is _sentry:
-            with self.__lock__:
-                if self.__attr__ is _sentry:
-                    object.__setattr__(
-                        self,
-                        "__attr__",
-                        self.__obj__(*self.__args__, **self.__kwargs__),
-                    )
-                else:
-                    return self.__attr__
-        return self.__attr__
+        raise NotImplemented
 
     def __getattr__(self, item):
         return getattr(self.__get_current_object__(), item)
@@ -130,7 +110,43 @@ class LazyObject:
     __deepcopy__ = lambda x, memo: copy.deepcopy(x.__get_current_object__(), memo)
 
 
-class ProxyLazyObject(LazyObject):
+class LocalLazyObject(BaseProxy):
+    def __init__(self, obj: Callable[..., LazyLoadType], args, kwargs):
+        super().__init__(obj, args, kwargs)
+        object.__setattr__(self, "__local__", _local())
+
+    def __get_current_object__(self):
+        # evaluated once on thread access
+        l = object.__getattribute__(self, "__local__")
+        o = getattr(l, "object", _sentry)
+        if o is _sentry:
+            o = self.__obj__(*self.__args__, **self.__kwargs__)
+            setattr(l, "object", o)
+        return o
+
+
+class LazyObject(BaseProxy):
+    def __init__(self, obj: Callable[..., LazyLoadType], args, kwargs):
+        super().__init__(obj, args, kwargs)
+        object.__setattr__(self, "__attr__", _sentry)
+        object.__setattr__(self, "__lock__", Lock())
+
+    def __get_current_object__(self):
+        # evaluated once on first access
+        if self.__attr__ is _sentry:
+            with self.__lock__:
+                if self.__attr__ is _sentry:
+                    object.__setattr__(
+                        self,
+                        "__attr__",
+                        self.__obj__(*self.__args__, **self.__kwargs__),
+                    )
+                else:
+                    return self.__attr__
+        return self.__attr__
+
+
+class ProxyObject(BaseProxy):
     def __get_current_object__(self):
         # evaluated on every access
         return self.__obj__(*self.__args__, **self.__kwargs__)
@@ -141,7 +157,11 @@ def lazy(obj: Callable[..., LazyLoadType], *args, **kwargs) -> LazyLoadType:
 
 
 def proxy(obj: Callable[..., LazyLoadType], *args, **kwargs) -> LazyLoadType:
-    return ProxyLazyObject(obj, args, kwargs)  # type: ignore
+    return ProxyObject(obj, args, kwargs)  # type: ignore
+
+
+def local(obj: Callable[..., LazyLoadType], *args, **kwargs) -> LazyLoadType:
+    return LocalLazyObject(obj, args, kwargs)  # type: ignore
 
 
 def reset_lazy(obj):

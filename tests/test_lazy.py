@@ -7,7 +7,7 @@ from functools import wraps
 from typing import Optional
 from unittest.mock import MagicMock
 
-from configalchemy.lazy import lazy, proxy, reset_lazy
+from configalchemy.lazy import lazy, proxy, reset_lazy, local
 
 
 def async_test(func):
@@ -57,7 +57,25 @@ class LazyTestCase(unittest.TestCase):
                 _
 
         self.assertEqual(1, call_mock.call_count)
-        object.__setattr__(number, "__attr__", None)
+
+    def test_local(self):
+        call_mock = MagicMock()
+
+        def get() -> int:
+            time.sleep(0.1)
+            call_mock()
+            return 1
+
+        number = local(get)
+
+        def task(num):
+            self.assertEqual(num + 1, number + num)
+
+        with ThreadPoolExecutor(max_workers=4) as worker:
+            for _ in worker.map(task, range(4)):
+                _
+
+        self.assertEqual(4, call_mock.call_count)
 
     def test_reset_lazy(self):
         call_mock = MagicMock()

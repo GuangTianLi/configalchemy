@@ -16,7 +16,6 @@ from typing import (
     Type,
     TextIO,
     Mapping,
-    overload,
 )
 from weakref import ref
 from threading import Thread

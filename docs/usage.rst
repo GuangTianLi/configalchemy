@@ -182,8 +182,6 @@ Advanced Usage
 Nested Config for Modular Purpose
 ------------------------------------------
 
-
-
 .. code-block:: python
 
     class NestedConfig(BaseConfig):

@@ -15,6 +15,7 @@
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
+import datetime
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
@@ -42,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ConfigAlchemy'
-copyright = "2019, GuangTian Li"
+copyright = f"{datetime.datetime.now().year}, GuangTian Li"
 author = "GuangTian Li"
 
 # The version info for the project you're documenting, acts as replacement

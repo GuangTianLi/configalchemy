@@ -57,6 +57,7 @@ Example
 Features
 ----------
 
+- Base on `The Twelve-Factor App Configuration <https://12factor.net/config>`_.
 - Configurable dynamic configurator
 - Configuration-Oriented Development
 
@@ -71,7 +72,7 @@ Features
 
 - **Proper Typecast** before overriding
 - Generic Config Type Support by custom typecast
-
+- Lazy and Proxy Object Support.
 - Extension
 
     - Full `Apollo - A reliable configuration management system <https://github.com/ctripcorp/apollo>`_ Features Support
@@ -79,4 +80,4 @@ Features
 TODO
 -------
 
-- Add More Proper Log
+- IOC - Injector, Singleton
