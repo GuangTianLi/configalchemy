@@ -4,6 +4,7 @@ import inspect
 import json
 import logging
 import os
+from threading import Thread
 from typing import (
     Any,
     KeysView,
@@ -18,7 +19,7 @@ from typing import (
     Mapping,
 )
 from weakref import ref
-from threading import Thread
+
 from configalchemy.field import Field
 from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
 
@@ -194,7 +195,7 @@ class BaseConfig(ConfigType):
             self.meta[key].set(priority=priority, value=value)
 
     def __getitem__(self, key: str) -> Any:
-        """ x.__getitem__(y) <==> x[y] """
+        """x.__getitem__(y) <==> x[y]"""
         return self.meta[key].value
 
     def items(self) -> List[Tuple[str, Any]]:  # type: ignore
