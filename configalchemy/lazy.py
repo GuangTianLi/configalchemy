@@ -1,8 +1,10 @@
 import copy
-from threading import Lock, local as _local
-from typing import TypeVar, Callable
+from collections import deque
+from contextvars import ContextVar
+from threading import Lock
+from typing import TypeVar, Callable, Generic, Deque, TYPE_CHECKING
 
-__all__ = ["local", "lazy", "proxy", "reset_lazy"]
+__all__ = ["local", "lazy", "proxy", "reset_lazy", "Pool"]
 
 LazyLoadType = TypeVar("LazyLoadType")
 
@@ -113,15 +115,15 @@ class BaseProxy:
 class LocalLazyObject(BaseProxy):
     def __init__(self, obj: Callable[..., LazyLoadType], args, kwargs):
         super().__init__(obj, args, kwargs)
-        object.__setattr__(self, "__local__", _local())
+        object.__setattr__(self, "__context_var__", ContextVar("LocalLazyObject"))
 
     def __get_current_object__(self):
         # evaluated once on thread access
-        l = object.__getattribute__(self, "__local__")
-        o = getattr(l, "object", _sentry)
+        context_var = object.__getattribute__(self, "__context_var__")
+        o = context_var.get(_sentry)
         if o is _sentry:
             o = self.__obj__(*self.__args__, **self.__kwargs__)
-            setattr(l, "object", o)
+            context_var.set(o)
         return o
 
 
@@ -150,6 +152,42 @@ class ProxyObject(BaseProxy):
     def __get_current_object__(self):
         # evaluated on every access
         return self.__obj__(*self.__args__, **self.__kwargs__)
+
+
+class PoolObject(BaseProxy):
+    def __init__(self, obj: Callable[..., LazyLoadType], args, kwargs):
+        super().__init__(obj, args, kwargs)
+        object.__setattr__(self, "__attr__", _sentry)
+
+    def __get_current_object__(self):
+        if self.__attr__ is _sentry:
+            object.__setattr__(
+                self, "__attr__", self.__obj__(*self.__args__, **self.__kwargs__)
+            )
+        return self.__attr__
+
+
+class Pool(Generic[LazyLoadType]):
+    def __init__(self, obj: Callable[..., LazyLoadType], *args, **kwargs):
+        self._obj = obj
+        self._args = args
+        self._kwargs = kwargs
+        self._pool: Deque[LazyLoadType] = deque()
+        self._current_active: ContextVar[LazyLoadType] = ContextVar("PoolCurrentActive")
+
+    def _new(self) -> LazyLoadType:
+        return PoolObject(self._obj, self._args, self._kwargs)  # type: ignore
+
+    def __enter__(self) -> LazyLoadType:
+        try:
+            current = self._pool.pop()
+        except IndexError:
+            current = self._new()
+        self._current_active.set(current)
+        return current
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._pool.append(self._current_active.get())
 
 
 def lazy(obj: Callable[..., LazyLoadType], *args, **kwargs) -> LazyLoadType:
