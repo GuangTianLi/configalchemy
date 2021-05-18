@@ -2,7 +2,7 @@ import copy
 from collections import deque
 from contextvars import ContextVar
 from threading import Lock
-from typing import TypeVar, Callable, Generic, Deque, TYPE_CHECKING
+from typing import TypeVar, Callable, Generic, Deque
 
 __all__ = ["local", "lazy", "proxy", "reset_lazy", "Pool"]
 

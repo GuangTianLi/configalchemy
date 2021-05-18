@@ -198,8 +198,8 @@ Nested Config for Modular Purpose
 Lazy
 ---------------
 
-Use `lazy` to turn any callable into a lazy evaluated callable. Results are not memoized; the
-function is evaluated on first access.
+Use `lazy` to turn any callable into a lazy evaluated callable. Results are memoized;
+the function is evaluated on first access.
 
 
 .. code-block:: python
@@ -226,8 +226,8 @@ function is evaluated on first access.
 Proxy
 ------------------
 
-Use `proxy` to turn any callable into a lazy evaluated callable. Results are not memoized; the
-function is evaluated on every access.
+Use `proxy` to turn any callable into a lazy evaluated callable. Results are not memoized;
+the function is evaluated on every access.
 
 
 .. code-block:: python
@@ -247,6 +247,30 @@ function is evaluated on every access.
     >>> print(f"Hello {lazy_name}")
     evaluating
     Hello World
+
+Pool
+------------------
+Use `Pool` to turn any callable into a pool. Result will be return by a context manager.
+the function is evaluated on result first access.
+
+.. code-block:: python
+
+    from configalchemy.lazy import Pool
+
+
+    def connect():
+        print("connecting")
+        return socket
+
+
+    connect_pool = Pool(connect)
+    >>> with connect_pool as connect:
+    ...     connect.send("")
+    connecting
+    0
+    >>> with connect_pool as connect:
+    ...     connect.send("")
+    0
 
 Access config from Apollo
 -------------------------------------------

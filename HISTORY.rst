@@ -7,6 +7,7 @@ History
 
 * Support nested config for large modular purpose
 * Support local object
+* Support generic pool object
 
 0.4.* (2020-06)
 ------------------
