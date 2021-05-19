@@ -1,5 +1,5 @@
 """Top-level package for ConfigAlchemy."""
 
-from .configalchemy import BaseConfig, ConfigType, get_current_config
+from configalchemy.configalchemy import BaseConfig, ConfigType, SingletonMetaClass
 
 __version__ = "0.5.2"

@@ -1,22 +1,19 @@
 import unittest
 
-from configalchemy import get_current_config, BaseConfig
+from configalchemy import BaseConfig, SingletonMetaClass
 
 
 class GlobalAPITestCase(unittest.TestCase):
     def test_get_current_config(self):
-        class DefaultConfig(BaseConfig):
+        class DefaultConfig(BaseConfig, metaclass=SingletonMetaClass):
             TEST = "test"
 
         with self.assertRaises(RuntimeError):
-            get_current_config(DefaultConfig)
+            DefaultConfig.instance()
 
-        with self.assertRaises(RuntimeError):
-            DefaultConfig()
-            get_current_config(DefaultConfig)
         config = DefaultConfig()
         config.TEST = "inited"
-        current_config = get_current_config(DefaultConfig)
+        current_config = DefaultConfig.instance()
         self.assertEqual("inited", current_config.TEST)
 
 

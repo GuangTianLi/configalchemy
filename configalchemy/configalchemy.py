@@ -13,12 +13,10 @@ from typing import (
     MutableMapping,
     Dict,
     Optional,
-    TypeVar,
     Type,
     TextIO,
     Mapping,
 )
-from weakref import ref
 
 from configalchemy.field import Field
 from configalchemy.meta import ConfigMeta, ConfigMetaJSONEncoder
@@ -28,7 +26,22 @@ ConfigType = MutableMapping[str, Any]
 logger = logging.getLogger(__name__)
 
 
-class BaseConfig(ConfigType):
+class SingletonMetaClass(type):
+    def __init__(self, *args, **kwargs):
+        self.__instance = None
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        instance = self.__instance
+        if instance is None:
+            instance = super().__call__(*args, **kwargs)
+            self.__instance = instance
+            return instance
+        else:
+            return instance
+
+
+class BaseConfig:
     """Initialize the :any:`BaseConfig` with the Priority::
 
         configure from env > configure from local file > configure from function > default configuration
@@ -99,9 +112,6 @@ class BaseConfig(ConfigType):
                 self.access_config_from_function(
                     priority=self.CONFIGALCHEMY_FUNCTION_VALUE_PRIORITY
                 )
-
-        global _current_config_ref
-        _current_config_ref = ref(self)
 
     def _setup(self):
         """Setup the default values and field of value from self."""
@@ -273,6 +283,13 @@ class BaseConfig(ConfigType):
         else:
             raise TypeError(f"{value} - type: {type(value)} can not be typecast")
 
+    @classmethod
+    def instance(cls) -> "BaseConfig":
+        instance = getattr(cls, "_SingletonMetaClass__instance")
+        if instance is None:
+            raise RuntimeError(f"There is no instance of type {cls}")
+        return instance
+
 
 class _ConfigAttribute:
     def __init__(self, name: str, default_value: Any):
@@ -289,15 +306,3 @@ class _ConfigAttribute:
 
     def __set__(self, instance: BaseConfig, value: Any) -> None:
         instance[self._name] = value
-
-
-_current_config_ref = ref(object)
-_CurrentConfigType = TypeVar("_CurrentConfigType", bound=BaseConfig)
-
-
-def get_current_config(config_type: Type[_CurrentConfigType]) -> _CurrentConfigType:
-    # """This API can and should only be used in lazy loading current config instance in the runtime"""
-    current_config = _current_config_ref()
-    if not isinstance(current_config, config_type):
-        raise RuntimeError(f"There is no instance of type {config_type}")
-    return current_config
