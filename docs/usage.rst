@@ -179,6 +179,17 @@ You can use Json data type - `configalchemy` will use json.loads to typecast.
 Advanced Usage
 =====================================
 
+Singleton
+------------------------------------------
+
+.. code-block:: python
+    from configalchemy import SingletonMetaClass
+    class FrameworkConfig(BaseConfig, metaclass=SingletonMetaClass):
+        NAME = "nested"
+
+    # your framework code
+    current_config = FrameworkConfig.instance()
+
 Nested Config for Modular Purpose
 ------------------------------------------
 

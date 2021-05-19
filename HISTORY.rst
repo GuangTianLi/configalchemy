@@ -5,6 +5,8 @@ History
 0.5.* (2020-12)
 ------------------
 
+* Support SingletonMetaClass
+* Remove unpack feature in `BaseConfig` by removing Mapping Class
 * Support nested config for large modular purpose
 * Support local object
 * Support generic pool object
