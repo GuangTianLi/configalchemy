@@ -197,14 +197,19 @@ Nested Config for Modular Purpose
 
     class NestedConfig(BaseConfig):
         NAME = "nested"
+        ADDRESS = "default"
 
     class DefaultConfig(BaseConfig):
         NESTED_CONFIG = NestedConfig()
 
     config = DefaultConfig()
     config.update(NESTED_CONFIG={"NAME": "updated"})
-     >>> config.NESTED_CONFIG.NAME
-     updated
+    config["NESTED_CONFIG.ADDRESS"] = "address"
+    >>> config.NESTED_CONFIG.NAME
+    updated
+    >>> config.NESTED_CONFIG.ADDRESS
+    address
+
 
 Lazy
 ---------------
