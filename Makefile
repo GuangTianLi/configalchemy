@@ -54,7 +54,7 @@ clean-build: ## remove build artifacts
 
 lint: ## statick check
 	black --check tests configalchemy
-	mypy configalchemy
+	mypy --install-types --non-interactive configalchemy
 
 test: ## run tests quickly with the default Python
 	python -m unittest discover -s tests
