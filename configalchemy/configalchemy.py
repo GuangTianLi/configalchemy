@@ -164,12 +164,11 @@ class BaseConfig:
 
     def _from_env(self) -> bool:
         """Updates the values in the config from the environment variable."""
-        for key, value in self.items():
-            env_value = os.getenv(f"{self.CONFIGALCHEMY_ENV_PREFIX}{key}")
-            if env_value is not None:
+        for key, value in os.environ.items():
+            if key.startswith(self.CONFIGALCHEMY_ENV_PREFIX):
                 self._set_value(
-                    key,
-                    env_value,
+                    key[len(self.CONFIGALCHEMY_ENV_PREFIX) :],
+                    value,
                     priority=self.CONFIGALCHEMY_ENVIRONMENT_VALUE_PRIORITY,
                 )
         return True
@@ -189,6 +188,11 @@ class BaseConfig:
         return True
 
     def _set_value(self, key: str, value: Any, priority: int):
+        split_key = key.split(".", 1)
+        if len(split_key) == 2:
+            key, nested_key = split_key
+            value = {nested_key: value}
+
         if key not in self.meta:
             """Setup"""
             self.meta[key] = ConfigMeta(

@@ -229,3 +229,15 @@ class ConfigalchemyTestCase(unittest.TestCase):
         config = DefaultConfig()
         config.update(NESTED_CONFIG={"NAME": "updated"})
         self.assertEqual("updated", config.NESTED_CONFIG.NAME)
+
+    def test_nested_config_update_with_env(self):
+        class NestedConfig(BaseConfig):
+            NAME = "nested"
+
+        class DefaultConfig(BaseConfig):
+            CONFIGALCHEMY_ENV_PREFIX = "TEST_"
+            NESTED_CONFIG = NestedConfig()
+
+        os.environ["TEST_NESTED_CONFIG.NAME"] = "changed"
+        config = DefaultConfig()
+        self.assertEqual("changed", config.NESTED_CONFIG.NAME)
