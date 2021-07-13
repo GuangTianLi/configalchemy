@@ -70,7 +70,7 @@ class FieldTestCase(unittest.TestCase):
                 return isinstance(instance, list)
 
             @classmethod
-            def __typecast__(cls, value: Any) -> list:
+            def __typecast__(cls, value: Any, priority: int) -> list:
                 return typecast(value)
 
         generic_config = TestGenericConfigMixin()

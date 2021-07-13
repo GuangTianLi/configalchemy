@@ -67,13 +67,13 @@ class ConfigalchemyTestCase(unittest.TestCase):
 
     def test_config_file_not_exist(self):
         class DefaultConfig(BaseConfig):
-            CONFIGALCHEMY_ENV_PREFIX = "CONFIGALCHEMY_"
+            CONFIGALCHEMY_ENV_PREFIX = "TEST_SILENT_"
             CONFIGALCHEMY_CONFIG_FILE = "not.exist"
 
         with self.assertRaises(IOError):
             DefaultConfig()
 
-        os.environ.setdefault("CONFIGALCHEMY_CONFIGALCHEMY_LOAD_FILE_SILENT", "True")
+        os.environ.setdefault("TEST_SILENT_CONFIGALCHEMY_LOAD_FILE_SILENT", "True")
         DefaultConfig()
 
     def test_config_with_env(self):

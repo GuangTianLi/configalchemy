@@ -35,7 +35,7 @@ class Field:
         self.default_value = default_value
         self.value_type = type(default_value)
         self.type_check: Callable[[Any], bool] = self._type_check
-        self.typecast: Callable[[Any], Any] = self._typecast
+        self.typecast: Callable[[Any, int], Any] = self._typecast
 
         self.prepare()
 
@@ -60,20 +60,20 @@ class Field:
             return
         if origin is Union:
             self.value_type = self.annotation.__args__
-            self.typecast = lambda x: self.value_type[0](x)
+            self.typecast = lambda x, p: self.value_type[0](x)
             return
 
-    def validate(self, value: Any) -> Any:
+    def validate(self, value: Any, priority: int = 0) -> Any:
         if self.type_check(value):
             return value
         else:
             try:
-                return self.typecast(value)
+                return self.typecast(value, priority)
             except Exception as e:
                 raise ValidateException(self.name, value) from e
 
     def _type_check(self, value: Any) -> bool:
         return isinstance(value, self.value_type)
 
-    def _typecast(self, value: Any) -> Any:
+    def _typecast(self, value: Any, priority: int) -> Any:
         return self.value_type(value)

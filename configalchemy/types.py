@@ -33,7 +33,7 @@ class JsonMeta(metaclass=OriginCached):
     def __type_check__(self, instance: Any) -> bool:
         return isinstance(instance, self.__origin__)
 
-    def __typecast__(self, value: Any) -> Any:
+    def __typecast__(self, value: Any, priority: int) -> Any:
         return json.loads(value)
 
 
@@ -61,7 +61,7 @@ class DefaultTypeCast(Generic[T]):
         return isinstance(instance, cls.__orig_bases__[0].__args__[0])
 
     @classmethod
-    def __typecast__(cls, value: Any) -> T:
+    def __typecast__(cls, value: Any, priority: int) -> T:
         raise TypeError(f"Object of type {cls.__name__} can not be typecast")
 
 
@@ -70,7 +70,7 @@ BOOL_STRINGS = {"true", "1", "yes", "y"}
 
 class Boolean(DefaultTypeCast[bool]):
     @classmethod
-    def __typecast__(self, value: Any) -> bool:
+    def __typecast__(self, value: Any, priority: int) -> bool:
         if isinstance(value, str):
             return value.lower() in BOOL_STRINGS
         else:

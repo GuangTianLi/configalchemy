@@ -48,7 +48,7 @@ class ConfigMeta:
         return self.items[-1].value
 
     def set(self, priority: int, value: Any) -> None:
-        value = self.field.validate(value)
+        value = self.field.validate(value, priority)
         length = len(self.items)
         item = ConfigMetaItem(priority, value)
         for index in range(length, 0, -1):

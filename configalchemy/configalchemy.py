@@ -280,9 +280,9 @@ class BaseConfig:
     def __type_check__(cls, instance: Any) -> bool:
         return isinstance(instance, cls)
 
-    def __typecast__(self, value: Any):
+    def __typecast__(self, value: Any, priority: int):
         if isinstance(value, Mapping):
-            self.update(value)
+            self.from_mapping(value, priority=priority)
             return self
         else:
             raise TypeError(f"{value} - type: {type(value)} can not be typecast")
