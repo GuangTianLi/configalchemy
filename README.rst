@@ -22,9 +22,9 @@ ConfigAlchemy
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
   :target: https://github.com/psf/black
 
+`中文 <docs_zh/README.md>`_
 
-
-The Settings and Configuration on ideal practices for app development and package building.
+The Settings and Configuration on ideal practices for cloud-native app development and package building.
 
 
 * Free software: MIT license

@@ -21,7 +21,7 @@ mypy = "==0.910"
 requests = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.9"
 
 [scripts]
 pre_commit_init = "pre-commit install"
